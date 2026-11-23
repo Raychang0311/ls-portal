@@ -28,6 +28,16 @@
   --line: color-mix(in oklab, var(--p-ink) 10%, transparent);
   --line-strong: color-mix(in oklab, var(--p-ink) 20%, transparent);
 
+  /* 毛玻璃層次 Token */
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --glass-bg-strong: rgba(255, 255, 255, 0.84);
+  --glass-bg-soft: rgba(244, 249, 246, 0.64);
+  --glass-border: rgba(255, 255, 255, 0.78);
+  --glass-blur: blur(16px) saturate(145%);
+  --glass-blur-sm: blur(10px) saturate(135%);
+  --glass-shadow: 0 10px 28px -16px rgba(22, 34, 29, 0.16),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.86);
+
   /* 半徑階梯 */
   --r-sm: 8px;
   --r-md: 12px;
@@ -75,6 +85,11 @@ html, body {
   margin: 0;
   padding: 0;
   background-color: var(--p-bg);
+  background-image:
+    radial-gradient(640px 420px at 10% 8%, rgba(74, 140, 114, 0.14), transparent 72%),
+    radial-gradient(560px 400px at 92% 16%, rgba(13, 148, 136, 0.11), transparent 72%),
+    radial-gradient(720px 460px at 50% 62%, rgba(74, 140, 114, 0.08), transparent 75%);
+  background-attachment: fixed;
   color: var(--p-ink);
   font-family: var(--font-text);
   font-size: 16px;
@@ -145,10 +160,12 @@ img, svg {
   left: 0;
   right: 0;
   height: var(--nav-h);
-  background: rgba(255, 255, 255, 0.96);
-  backdrop-filter: blur(8px);
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(20px) saturate(155%);
+  backdrop-filter: blur(20px) saturate(155%);
   border-top: 2px solid var(--p-action);
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid rgba(22, 34, 29, 0.09);
+  box-shadow: 0 6px 24px -18px rgba(22, 34, 29, 0.22), inset 0 -1px 0 rgba(255, 255, 255, 0.65);
   z-index: 500;
 }
 
@@ -299,7 +316,10 @@ img, svg {
   padding: 0 14px;
   border-radius: 999px;
   border: 1px solid var(--line-strong);
-  background: var(--p-surface);
+  background: var(--glass-bg-strong);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
+  backdrop-filter: var(--glass-blur-sm);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
   color: var(--p-ink);
   font-size: 0.85rem;
   font-weight: 600;
@@ -387,7 +407,10 @@ img, svg {
 }
 
 .btn--secondary {
-  background: var(--p-surface);
+  background: var(--glass-bg-strong);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
+  backdrop-filter: var(--glass-blur-sm);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
   color: var(--p-ink);
   border-color: var(--line-strong);
 }
@@ -547,7 +570,10 @@ img, svg {
   padding: 10px 14px;
   border: 1px solid var(--line-strong);
   border-radius: var(--r-sm);
-  background: var(--p-surface);
+  background: var(--glass-bg-strong);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
+  backdrop-filter: var(--glass-blur-sm);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
   font-size: 16px;
   color: var(--p-ink);
   transition: border-color var(--m-out) var(--m-ease), box-shadow var(--m-out) var(--m-ease);
@@ -597,8 +623,11 @@ img, svg {
   flex-wrap: wrap;
   max-width: 100%;
   gap: 4px;
-  background: var(--p-surface);
-  border: 1px solid var(--line);
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
+  backdrop-filter: var(--glass-blur-sm);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
   border-radius: var(--r-md);
   padding: 4px;
 }
@@ -638,7 +667,10 @@ img, svg {
   padding: 0 14px;
   border-radius: 999px;
   border: 1px solid var(--line-strong);
-  background: var(--p-surface);
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
+  backdrop-filter: var(--glass-blur-sm);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
   color: var(--p-muted);
   font-size: 0.86rem;
   font-weight: 500;
@@ -663,8 +695,11 @@ img, svg {
   right: 0;
   height: calc(var(--dock-h) + env(safe-area-inset-bottom, 0px));
   padding-bottom: env(safe-area-inset-bottom, 0px);
-  background: var(--p-surface);
-  border-top: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.78);
+  -webkit-backdrop-filter: blur(20px) saturate(155%);
+  backdrop-filter: blur(20px) saturate(155%);
+  border-top: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 -8px 26px -14px rgba(22, 34, 29, 0.16);
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   z-index: 500;
@@ -738,16 +773,22 @@ img, svg {
   justify-content: center;
   gap: 10px;
   padding: 24px;
-  background: var(--p-surface);
-  border: 1px solid var(--line);
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
   border-radius: var(--r-lg);
   color: var(--p-muted);
   font-size: 0.94rem;
 }
 
 .empty-panel {
-  background: var(--p-surface);
-  border: 1px solid var(--line);
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
   border-radius: var(--r-lg);
   padding: 40px 24px;
   text-align: center;
@@ -777,7 +818,9 @@ img, svg {
 .drawer-overlay, .submodal-overlay, .profile-overlay, .lightbox-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(22, 34, 29, 0.56);
+  background: rgba(20, 32, 27, 0.46);
+  -webkit-backdrop-filter: blur(8px) saturate(120%);
+  backdrop-filter: blur(8px) saturate(120%);
   display: none;
   align-items: center;
   justify-content: center;
@@ -808,19 +851,32 @@ img, svg {
 /* 確保 SweetAlert2 燈箱永遠高於個人數位名片與所有抽屜 */
 .swal2-container {
   z-index: 3000 !important;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
+.swal2-popup {
+  background: rgba(255, 255, 255, 0.88) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(145%);
+  backdrop-filter: blur(22px) saturate(145%);
+  border: 1px solid rgba(255, 255, 255, 0.85) !important;
+  border-radius: var(--r-lg) !important;
+  box-shadow: 0 28px 56px -18px rgba(16, 26, 22, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.92) !important;
 }
 
 .drawer-panel {
   width: 100%;
   max-width: 720px;
   max-height: 90vh;
-  background: var(--p-surface);
-  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.88);
+  -webkit-backdrop-filter: blur(24px) saturate(145%);
+  backdrop-filter: blur(24px) saturate(145%);
+  border: 1px solid rgba(255, 255, 255, 0.8);
   border-radius: var(--r-lg);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  box-shadow: 0 24px 48px -18px rgba(16, 26, 22, 0.28);
+  box-shadow: 0 28px 56px -18px rgba(16, 26, 22, 0.30), inset 0 1px 0 rgba(255, 255, 255, 0.92);
 }
 
 .form-drawer {
@@ -834,7 +890,9 @@ img, svg {
   gap: 12px;
   padding: 14px 20px;
   border-bottom: 1px solid var(--line);
-  background: var(--p-surface);
+  background: rgba(255, 255, 255, 0.72);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
   flex-shrink: 0;
 }
 
@@ -875,14 +933,16 @@ img, svg {
   width: 100%;
   max-width: 460px;
   max-height: 88vh;
-  background: var(--p-surface);
-  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.88);
+  -webkit-backdrop-filter: blur(22px) saturate(145%);
+  backdrop-filter: blur(22px) saturate(145%);
+  border: 1px solid rgba(255, 255, 255, 0.8);
   border-radius: var(--r-lg);
   padding: 20px;
   display: flex;
   flex-direction: column;
   gap: 14px;
-  box-shadow: 0 24px 48px -18px rgba(16, 26, 22, 0.32);
+  box-shadow: 0 28px 56px -18px rgba(16, 26, 22, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.92);
 }
 
 .submodal-head {
@@ -917,18 +977,20 @@ img, svg {
   width: 100%;
   max-width: 440px;
   max-height: 88vh;
-  background: var(--p-surface);
-  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.88);
+  -webkit-backdrop-filter: blur(24px) saturate(145%);
+  backdrop-filter: blur(24px) saturate(145%);
+  border: 1px solid rgba(255, 255, 255, 0.78);
   border-radius: var(--r-lg);
   overflow: hidden;
   display: flex;
   flex-direction: column;
   position: relative;
-  box-shadow: 0 24px 48px -16px rgba(16, 26, 22, 0.35);
+  box-shadow: 0 28px 56px -16px rgba(16, 26, 22, 0.36), inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
 .profile-modal-head {
-  background: var(--p-action);
+  background: linear-gradient(145deg, rgba(58, 110, 89, 0.94), rgba(13, 148, 136, 0.86));
   color: #ffffff;
   padding: 26px 20px 20px;
   text-align: center;

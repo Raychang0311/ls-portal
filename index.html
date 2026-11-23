@@ -127,10 +127,14 @@
                 <!-- 橫向 3D 點唱機舞台 -->
                 <div id="jukeboxShell" class="jukebox-shell" style="display: none;">
                     <div class="jukebox-stage" id="jukeboxStage" tabindex="0" aria-roledescription="carousel" aria-label="進行中揪團旋轉點唱機">
+                        <div class="jukebox-stage-chrome" aria-hidden="true">
+                            <span class="mono stage-chrome-label">L&gt;S JUKEBOX · 3D DECK</span>
+                            <span class="stage-chrome-dot">LIVE SYNC</span>
+                        </div>
                         <!-- 建築感同心圓弧刻度裝飾線 -->
                         <svg class="jukebox-arc-bg" viewBox="0 0 1200 220" preserveAspectRatio="none" aria-hidden="true">
-                            <path d="M 60 205 Q 600 105 1140 205" fill="none" stroke="currentColor" stroke-width="1" />
-                            <path d="M 160 215 Q 600 135 1040 215" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="4 6" />
+                            <path d="M 40 205 Q 600 85 1160 205" fill="none" stroke="currentColor" stroke-width="1" />
+                            <path d="M 150 215 Q 600 122 1050 215" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="4 6" />
                         </svg>
                         <div class="jukebox-track" id="jukeboxTrack"></div>
                     </div>
@@ -181,7 +185,6 @@
                         <button type="button" class="filter-tab tab is-active" data-mfilter="all" onclick="PortalMembers.setQuickFilter('all')">全部群友</button>
                         <button type="button" class="filter-tab tab" data-mfilter="birthday" onclick="PortalMembers.setQuickFilter('birthday')">本月壽星</button>
                         <button type="button" class="filter-tab tab" data-mfilter="active" onclick="PortalMembers.setQuickFilter('active')">本月活躍</button>
-                        <button type="button" class="filter-tab tab" data-mfilter="hosts" onclick="PortalMembers.setQuickFilter('hosts')">主揪群友</button>
                     </div>
                 </div>
 
