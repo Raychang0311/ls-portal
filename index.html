@@ -844,15 +844,20 @@
             </div>
             <div class="edit-profile-scroll">
                 <div class="form-field">
-                    <label for="editAge">🎂 年齡 / 出生年（選填，留空顯示秘密）</label>
-                    <input type="text" id="editAge" class="field-input" inputmode="numeric" placeholder="例如：1995 或 28（留空即為秘密）" maxlength="10" oninput="PortalProfile.clampBirthYearInput(this)">
+                    <label for="editAge">🎂 年齡 / 出生年</label>
+                    <input type="text" id="editAge" class="field-input" inputmode="numeric" placeholder="例如：18（永遠18歲）或 1995（西元出生年）" maxlength="10" oninput="PortalProfile.clampBirthYearInput(this)">
+                    <div class="edit-hint">
+                        • 輸入 <b>1899 以下</b>：顯示為「<b>永遠的XX歲</b>」（保留凍齡設定，例如 18 → 永遠的18歲）<br>
+                        • 輸入 <b>1900～今年（西元出生年）</b>：依生日自動計算實際歲數；若填寫未來年份會自動跳回今年<br>
+                        • <b>留空</b>：顯示為「<b>秘密 🤫</b>」
+                    </div>
                 </div>
                 <div class="form-field">
-                    <label for="editResidence">📍 居住地（選填）</label>
+                    <label for="editResidence">📍 居住地</label>
                     <input type="text" id="editResidence" class="field-input" placeholder="例如：台北市、新北市板橋區" maxlength="30">
                 </div>
                 <div class="form-field">
-                    <label for="editOccupation">💼 職業 / 領域（選填）</label>
+                    <label for="editOccupation">💼 職業 / 領域</label>
                     <input type="text" id="editOccupation" class="field-input" placeholder="例如：軟體工程師、設計、服務業" maxlength="30">
                 </div>
                 <div class="form-field">
@@ -866,7 +871,7 @@
                     </select>
                 </div>
                 <div class="form-field">
-                    <label>🔗 社群媒體連結（選填，可填網址或帳號）</label>
+                    <label>🔗 社群媒體連結（可填網址或帳號）</label>
                     <div class="social-edit-stack">
                         <input type="text" id="editInstagram" class="field-input" placeholder="Instagram 連結或帳號" maxlength="200">
                         <input type="text" id="editX" class="field-input" placeholder="X (Twitter) 連結或帳號" maxlength="200">
