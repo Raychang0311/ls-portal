@@ -6,7 +6,7 @@ window.PortalApi = (function() {
     // 後端 GAS Web App URLs 與 入口網站專屬 LIFF ID
     // =========================================================================
     // 請將 PORTAL_LIFF_ID 替換為您在 LINE Developers Console 新建指向入口網站根目錄的 LIFF ID
-    const PORTAL_LIFF_ID = 'YOUR_PORTAL_LIFF_ID';
+    const PORTAL_LIFF_ID = '2005700153-iA5K75WX';
 
     const GAS_ENDPOINTS = {
         group: 'https://script.google.com/macros/s/AKfycbx_fYHcCd2WlOVLaoJiVCYrpuTKGCuIs1XWiwzdl2-7S6f4CjCvsc7j-iNL_EDxHJ15pQ/exec',
