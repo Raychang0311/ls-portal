@@ -82,7 +82,7 @@ window.PortalGroupDetail = (function() {
         currentGroup = g;
 
         document.getElementById('gdSeqBadge').textContent = '#' + (g.seqId || '');
-        document.getElementById('gdDate').textContent = g.date || '';
+        document.getElementById('gdDate').textContent = window.PortalApi.formatSmartDateRange(g.startDate, g.endDate, g.date);
         document.getElementById('gdTitle').textContent = g.title || '揪團活動';
         document.getElementById('gdContent').innerHTML = replaceLinks(g.content || '');
 

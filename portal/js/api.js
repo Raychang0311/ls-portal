@@ -179,6 +179,31 @@ window.PortalApi = (function() {
         return Store.members.find(m => m && m.id && String(m.id).trim().toLowerCase() === target) || null;
     }
 
+    function formatSmartDateRange(startStr, endStr, fallbackStr) {
+        const s = String(startStr || '').trim();
+        const e = String(endStr || '').trim();
+        if (s && e) {
+            const sp = s.split(/\s+/);
+            const ep = e.split(/\s+/);
+            const sDate = sp[0] || '';
+            const sTime = sp[1] || '';
+            const eDate = ep[0] || '';
+            const eTime = ep[1] || '';
+            if (sDate && eDate && sDate === eDate) {
+                return sTime && eTime ? `${sDate} ${sTime} ~ ${eTime}` : `${s} ~ ${e}`;
+            }
+            const sYear = sDate.slice(0, 4);
+            const eYear = eDate.slice(0, 4);
+            if (/^\d{4}$/.test(sYear) && sYear === eYear && eDate.length > 5) {
+                return `${s} ~ ${eDate.slice(5)}${eTime ? ' ' + eTime : ''}`;
+            }
+            return `${s} ~ ${e}`;
+        }
+        if (s) return s;
+        if (e) return e;
+        return String(fallbackStr || '').trim() || '時間未定';
+    }
+
     function updateNavSummary() {
         const el = document.getElementById('navLiveSummary');
         if (!el) return;
@@ -202,6 +227,7 @@ window.PortalApi = (function() {
         replaceLinks,
         openExternalUrl,
         findMemberById,
+        formatSmartDateRange,
         updateNavSummary
     };
 })();

@@ -95,14 +95,12 @@ window.PortalMembers = (function() {
         const input = document.getElementById('memberSearchInput');
         const q = input ? input.value.trim().toLowerCase() : '';
 
-        return Store.members.filter(m => {
+        let list = Store.members.filter(m => {
             if (quickFilter === 'birthday') {
                 const hasBdayBadge = Array.isArray(m.badges) && m.badges.some(b => b.includes('壽星'));
                 if (!hasBdayBadge) return false;
             } else if (quickFilter === 'active') {
                 if ((Number(m.monthMsg) || 0) <= 0) return false;
-            } else if (quickFilter === 'hosts') {
-                if ((Number(m.hostCount) || 0) <= 0) return false;
             }
 
             if (!q) return true;
@@ -112,6 +110,18 @@ window.PortalMembers = (function() {
                 (m.zodiac && m.zodiac.toLowerCase().includes(q)) ||
                 (Array.isArray(m.badges) && m.badges.some(b => b.toLowerCase().includes(q)));
         });
+
+        if (quickFilter === 'active') {
+            list = list.slice().sort((a, b) => {
+                const diffMonth = (Number(b.monthMsg) || 0) - (Number(a.monthMsg) || 0);
+                if (diffMonth !== 0) return diffMonth;
+                const diffDaily = (Number(b.dailyMsg) || 0) - (Number(a.dailyMsg) || 0);
+                if (diffDaily !== 0) return diffDaily;
+                return (Number(b.yearMsg) || 0) - (Number(a.yearMsg) || 0);
+            });
+        }
+
+        return list;
     }
 
     function renderGrid() {
@@ -121,9 +131,13 @@ window.PortalMembers = (function() {
 
         const list = getFilteredList();
         if (pill) {
-            pill.textContent = (list.length === Store.members.length)
-                ? `共 ${Store.members.length} 位群友`
-                : `符合 ${list.length} / ${Store.members.length} 位`;
+            if (quickFilter === 'active') {
+                pill.textContent = `本月活躍 ${list.length} 位（依發言數排序）`;
+            } else {
+                pill.textContent = (list.length === Store.members.length)
+                    ? `共 ${Store.members.length} 位群友`
+                    : `符合 ${list.length} / ${Store.members.length} 位`;
+            }
         }
 
         if (!list.length) {
@@ -133,7 +147,7 @@ window.PortalMembers = (function() {
 
         const uidLower = Store.currentUserId ? Store.currentUserId.toLowerCase() : '';
         let html = '';
-        list.forEach(m => {
+        list.forEach((m, idx) => {
             const isMe = uidLower && m.id && String(m.id).trim().toLowerCase() === uidLower;
             const primaryBadge = (Array.isArray(m.badges) && m.badges.length > 0) ? m.badges[0] : '';
             const res = (m.residence && m.residence !== '未填寫') ? m.residence : '';
@@ -144,6 +158,10 @@ window.PortalMembers = (function() {
             else if (occ) meta = `💼 ${escapeHtml(occ)}`;
             else meta = escapeHtml(m.zodiac || '秘密 🤫');
 
+            const activeRankHtml = (quickFilter === 'active')
+                ? `<div class="dir-active-pill mono">#${idx + 1} · 本月 ${(Number(m.monthMsg) || 0).toLocaleString('en-US')} 則</div>`
+                : '';
+
             const safeId = escapeHtml(m.id);
             html += `
                 <article class="member-dir-card ${isMe ? 'is-me-card' : ''}" data-member-id="${safeId.toLowerCase()}" onclick="PortalProfile.openByUserId('${safeId}', this)">
@@ -152,6 +170,7 @@ window.PortalMembers = (function() {
                         ${isMe ? '<span class="my-self-badge">我</span>' : ''}
                     </div>
                     <div class="dir-name">${escapeHtml(m.name)}</div>
+                    ${activeRankHtml}
                     ${primaryBadge ? `<div class="dir-badge">${escapeHtml(primaryBadge)}</div>` : ''}
                     <div class="dir-meta">${meta}</div>
                 </article>

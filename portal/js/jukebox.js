@@ -292,17 +292,7 @@ window.PortalJukebox = (function() {
     }
 
     function formatCompactDateRange(g) {
-        const s = String(g.startDate || '').trim();
-        const e = String(g.endDate || '').trim();
-        if (s && e) {
-            const sp = s.split(' ');
-            const ep = e.split(' ');
-            if (sp.length === 2 && ep.length === 2 && sp[0] === ep[0]) {
-                return `${s} ~ ${ep[1]}`;
-            }
-            return `${s} ~ ${e}`;
-        }
-        return g.date || '時間未定';
+        return window.PortalApi.formatSmartDateRange(g.startDate, g.endDate, g.date);
     }
 
     function renderCards(trackEl) {
@@ -320,9 +310,9 @@ window.PortalJukebox = (function() {
             const isJoined = uidLower && joined.some(m => String(m.id).toLowerCase() === uidLower);
             const excerpt = stripHtmlToText(g.content) || '點擊查看活動完整說明與地圖資訊';
 
-            const stackHtml = joined.slice(0, 5).map(m =>
+            const stackItems = joined.slice(0, 4).map(m =>
                 `<img src="${escapeHtml(m.pic || 'https://imgur.com/786FxAA.jpg')}" alt="${escapeHtml(m.name)}" loading="lazy" onerror="this.src='https://imgur.com/786FxAA.jpg'">`
-            ).join('');
+            ).join('') + (curCount > 4 ? `<span class="jb-avatar-more mono">+${curCount - 4}</span>` : '');
 
             const trackNum = String(idx + 1).padStart(2, '0');
             const totalStr = String(filteredGroups.length).padStart(2, '0');
@@ -346,8 +336,14 @@ window.PortalJukebox = (function() {
                         </div>
                         <h2 class="jb-title">${escapeHtml(g.title || '揪團活動')}</h2>
                         <div class="jb-meta-panel">
-                            <div class="jb-meta-line"><span>🗓️</span><span class="mono">${escapeHtml(formatCompactDateRange(g))}</span></div>
-                            <div class="jb-meta-line"><span>📍</span><span>${escapeHtml(locDisplay)}</span></div>
+                            <div class="jb-meta-line">
+                                <svg class="jb-meta-svg" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                                <span class="mono">${escapeHtml(formatCompactDateRange(g))}</span>
+                            </div>
+                            <div class="jb-meta-line">
+                                <svg class="jb-meta-svg" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                                <span>${escapeHtml(locDisplay)}</span>
+                            </div>
                         </div>
                         <p class="jb-excerpt">${escapeHtml(excerpt)}</p>
                     </div>
@@ -355,8 +351,8 @@ window.PortalJukebox = (function() {
                     <div class="jb-footer">
                         <div class="jb-social-row">
                             <div class="jb-avatars-wrap">
-                                <div class="jb-avatar-stack">${stackHtml}</div>
-                                <span class="jb-host-label">主揪 ${escapeHtml(g.hostName || '群友')}</span>
+                                <div class="jb-avatar-stack">${stackItems}</div>
+                                <span class="jb-host-label">主揪 <strong>${escapeHtml(g.hostName || '群友')}</strong></span>
                             </div>
                             <div class="jb-count-wrap">
                                 <div class="jb-count-text mono">${curCount} / ${maxL === 99 ? '∞' : maxL} 人</div>

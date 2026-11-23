@@ -41,14 +41,19 @@
 }
 
 .gd-date-line {
-  display: inline-block;
-  padding: 4px 12px;
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  padding: 5px 12px;
   border-radius: 999px;
   background: var(--p-accent-soft);
   color: var(--p-action);
-  font-size: 0.86rem;
+  font-size: clamp(0.76rem, 2.3vw, 0.86rem);
   font-weight: 600;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .gd-title {
@@ -784,7 +789,18 @@
   height: 100%;
   border-radius: 50%;
   object-fit: cover;
+  background: #e2ebe7;
   border: 2px solid var(--p-surface);
+}
+
+.dir-active-pill {
+  font-size: 0.76rem;
+  font-weight: 700;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--p-accent-soft);
+  color: var(--p-action);
+  border: 1px solid color-mix(in oklab, var(--p-accent) 28%, transparent);
 }
 
 .dir-name {
@@ -909,9 +925,17 @@
 
 .gh-workspace {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: 18px;
   align-items: start;
+}
+
+.gh-list-pane,
+#ghList,
+.gh-detail-pane,
+.control-panel {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .gh-detail-pane {
@@ -941,7 +965,14 @@
   border-radius: var(--r-md);
   padding: 16px;
   margin-bottom: 10px;
-  transition: transform var(--m-out) var(--m-ease), border-color var(--m-out) var(--m-ease);
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  transition: transform var(--m-out) var(--m-ease), border-color var(--m-out) var(--m-ease), box-shadow var(--m-out) var(--m-ease);
+}
+
+.history-card {
+  border-left: 3px solid var(--p-accent);
 }
 
 .history-card, .history-row-item {
@@ -957,7 +988,40 @@
   .history-card:hover, .history-row-item:hover {
     transform: translateY(-1px);
     border-color: var(--p-accent);
+    box-shadow: 0 10px 22px -18px rgba(22, 34, 29, 0.25);
   }
+}
+
+.history-row-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+}
+
+.history-row-main {
+  min-width: 0;
+  flex: 1;
+}
+
+.history-row-title {
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.history-row-sub {
+  font-size: 0.8rem;
+  color: var(--p-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.history-row-item .status-pill {
+  flex-shrink: 0;
 }
 
 .card-meta-top {
@@ -1047,17 +1111,25 @@
 .kv-row {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   gap: 10px;
   font-size: 0.88rem;
 }
 
 .kv-k {
   color: var(--p-muted);
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .kv-v {
   font-weight: 600;
   text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: clamp(0.76rem, 2.2vw, 0.86rem);
+  min-width: 0;
 }
 
 .loc-mini-card {
@@ -1169,10 +1241,17 @@
 
 .left-row-item {
   display: grid;
-  grid-template-columns: 1.4fr 1fr auto;
+  grid-template-columns: minmax(0, 1.4fr) auto auto;
   align-items: center;
   gap: 10px;
   padding: 12px 16px;
+}
+
+.left-row-item > div:first-child {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .list-footer {

@@ -185,7 +185,7 @@ window.PortalHistory = (function() {
 
         return {
             host, hostLower: host.toLowerCase(), hostDate, startTime, endTime,
-            displayTime: (startTime && endTime) ? `${startTime} ~ ${endTime}` : (startTime || endTime || hostDate || '未記錄時間'),
+            displayTime: window.PortalApi.formatSmartDateRange(startTime, endTime, hostDate ? `發起日 ${hostDate}` : '未記錄時間'),
             shortTime: startTime || (hostDate ? `發起 ${hostDate}` : '時間未記錄'),
             content, contentLower: content.toLowerCase(), title, titleLower: title.toLowerCase(), bodyText,
             joiners, joinersLower: joiners.map(j => j.toLowerCase()), endType,
@@ -281,9 +281,9 @@ window.PortalHistory = (function() {
             if (isCompact) {
                 html += `
                     <div class="history-row-item ${sel ? 'is-selected' : ''}" data-gh-pos="${pos}" onclick="PortalHistory.selectGhItem(${pos})">
-                        <div style="min-width:0;">
-                            <div style="font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${highlight(rec.title, ghState.keyword)}</div>
-                            <div class="mono" style="font-size:0.8rem;color:var(--p-muted);">${escapeHtml(rec.shortTime)} · 主揪 ${escapeHtml(rec.host)} · ${rec.joiners.length}人</div>
+                        <div class="history-row-main">
+                            <div class="history-row-title">${highlight(rec.title, ghState.keyword)}</div>
+                            <div class="history-row-sub mono">${escapeHtml(rec.shortTime)} · 主揪 ${escapeHtml(rec.host)} · ${rec.joiners.length}人</div>
                         </div>
                         <span class="status-pill ${isEarly ? 'is-early' : 'is-done'}">${escapeHtml(rec.endType)}</span>
                     </div>`;
