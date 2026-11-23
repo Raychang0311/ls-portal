@@ -4,6 +4,14 @@
 window.PortalMembers = (function() {
     const { Store, callGasApi, escapeHtml, updateNavSummary } = window.PortalApi;
 
+    const RANK_MODES = {
+        active: { field: 'monthMsg', unit: '則', prefix: '本月', header: '本月活躍 {c} 位（依本月發言數排序）', ties: ['dailyMsg', 'yearMsg'] },
+        unsend: { field: 'unsendCount', unit: '則', prefix: '收回', header: '收回排行 {c} 位（依收回訊息數排序）', ties: ['yearMsg', 'textCount'] },
+        host:   { field: 'hostCount', unit: '次', prefix: '主揪', header: '揪團排行 {c} 位（依主辦揪團次數排序）', ties: ['joinCount', 'yearMsg'] },
+        join:   { field: 'joinCount', unit: '次', prefix: '參團', header: '參團排行 {c} 位（依參加揪團次數排序）', ties: ['hostCount', 'yearMsg'] },
+        msg:    { field: 'textCount', unit: '則', prefix: '發言', header: '發言排行 {c} 位（依總發言數排序）', ties: ['monthMsg', 'yearMsg'] }
+    };
+
     let quickFilter = 'all';
     let eventsBound = false;
 
@@ -94,13 +102,14 @@ window.PortalMembers = (function() {
     function getFilteredList() {
         const input = document.getElementById('memberSearchInput');
         const q = input ? input.value.trim().toLowerCase() : '';
+        const rankCfg = RANK_MODES[quickFilter];
 
         let list = Store.members.filter(m => {
             if (quickFilter === 'birthday') {
                 const hasBdayBadge = Array.isArray(m.badges) && m.badges.some(b => b.includes('壽星'));
                 if (!hasBdayBadge) return false;
-            } else if (quickFilter === 'active') {
-                if ((Number(m.monthMsg) || 0) <= 0) return false;
+            } else if (rankCfg) {
+                if ((Number(m[rankCfg.field]) || 0) <= 0) return false;
             }
 
             if (!q) return true;
@@ -111,13 +120,16 @@ window.PortalMembers = (function() {
                 (Array.isArray(m.badges) && m.badges.some(b => b.toLowerCase().includes(q)));
         });
 
-        if (quickFilter === 'active') {
+        if (rankCfg) {
             list = list.slice().sort((a, b) => {
-                const diffMonth = (Number(b.monthMsg) || 0) - (Number(a.monthMsg) || 0);
-                if (diffMonth !== 0) return diffMonth;
-                const diffDaily = (Number(b.dailyMsg) || 0) - (Number(a.dailyMsg) || 0);
-                if (diffDaily !== 0) return diffDaily;
-                return (Number(b.yearMsg) || 0) - (Number(a.yearMsg) || 0);
+                const primary = (Number(b[rankCfg.field]) || 0) - (Number(a[rankCfg.field]) || 0);
+                if (primary !== 0) return primary;
+                for (let i = 0; i < rankCfg.ties.length; i++) {
+                    const k = rankCfg.ties[i];
+                    const d = (Number(b[k]) || 0) - (Number(a[k]) || 0);
+                    if (d !== 0) return d;
+                }
+                return 0;
             });
         }
 
@@ -130,9 +142,10 @@ window.PortalMembers = (function() {
         if (!grid) return;
 
         const list = getFilteredList();
+        const rankCfg = RANK_MODES[quickFilter];
         if (pill) {
-            if (quickFilter === 'active') {
-                pill.textContent = `本月活躍 ${list.length} 位（依發言數排序）`;
+            if (rankCfg) {
+                pill.textContent = rankCfg.header.replace('{c}', list.length);
             } else {
                 pill.textContent = (list.length === Store.members.length)
                     ? `共 ${Store.members.length} 位群友`
@@ -158,8 +171,8 @@ window.PortalMembers = (function() {
             else if (occ) meta = `💼 ${escapeHtml(occ)}`;
             else meta = escapeHtml(m.zodiac || '秘密 🤫');
 
-            const activeRankHtml = (quickFilter === 'active')
-                ? `<div class="dir-active-pill mono">#${idx + 1} · 本月 ${(Number(m.monthMsg) || 0).toLocaleString('en-US')} 則</div>`
+            const rankPillHtml = rankCfg
+                ? `<div class="dir-active-pill mono">#${idx + 1} · ${rankCfg.prefix} ${(Number(m[rankCfg.field]) || 0).toLocaleString('en-US')} ${rankCfg.unit}</div>`
                 : '';
 
             const safeId = escapeHtml(m.id);
@@ -170,7 +183,7 @@ window.PortalMembers = (function() {
                         ${isMe ? '<span class="my-self-badge">我</span>' : ''}
                     </div>
                     <div class="dir-name">${escapeHtml(m.name)}</div>
-                    ${activeRankHtml}
+                    ${rankPillHtml}
                     ${primaryBadge ? `<div class="dir-badge">${escapeHtml(primaryBadge)}</div>` : ''}
                     <div class="dir-meta">${meta}</div>
                 </article>

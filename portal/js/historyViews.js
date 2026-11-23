@@ -330,7 +330,15 @@ window.PortalHistory = (function() {
         stEl.textContent = rec.endType;
         stEl.className = `status-pill ${isEarly ? 'is-early' : 'is-done'}`;
         document.getElementById(`${prefix}Title`).innerHTML = highlight(rec.title, ghState.keyword);
-        document.getElementById(`${prefix}ActivityTime`).textContent = rec.displayTime;
+        const timeEl = document.getElementById(`${prefix}ActivityTime`);
+        if (timeEl) {
+            if (rec.displayTime.includes(' ~ ')) {
+                const parts = rec.displayTime.split(' ~ ');
+                timeEl.innerHTML = `<span class="time-seg">${escapeHtml(parts[0])}</span> <span class="time-seg">~ ${escapeHtml(parts.slice(1).join(' ~ '))}</span>`;
+            } else {
+                timeEl.textContent = rec.displayTime;
+            }
+        }
 
         const hdRow = document.getElementById(`${prefix}HostDateRow`);
         if (rec.hostDate) {

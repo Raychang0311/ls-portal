@@ -7,32 +7,59 @@ window.PortalGroupDetail = (function() {
     let currentGroup = null;
     let targetMapUrl = '';
     let leafletMap = null;
+    let isDetailLoading = false;
+    let activeOpenToken = 0;
+
+    function setDetailLoading(loading) {
+        isDetailLoading = Boolean(loading);
+        const overlay = document.getElementById('gdLoadingOverlay');
+        const panel = document.querySelector('#groupDetailOverlay .drawer-panel');
+        const closeBtn = document.getElementById('gdCloseBtn');
+        if (overlay) overlay.hidden = !isDetailLoading;
+        if (panel) panel.setAttribute('aria-busy', isDetailLoading ? 'true' : 'false');
+        if (closeBtn) closeBtn.disabled = isDetailLoading;
+    }
+
+    function handleOverlayClick(event) {
+        if (isDetailLoading) return;
+        if (event && event.target === document.getElementById('groupDetailOverlay')) {
+            close();
+        }
+    }
 
     function open(seqId) {
         if (!seqId) return;
         const overlay = document.getElementById('groupDetailOverlay');
         if (!overlay) return;
 
+        const token = ++activeOpenToken;
         const cached = Store.groups.find(g => String(g.seqId) === String(seqId));
         if (cached) {
             renderGroup(cached);
-            overlay.classList.add('is-open');
-            document.body.style.overflow = 'hidden';
-            setTimeout(() => { if (leafletMap) leafletMap.invalidateSize(); }, 220);
-            // 背景補拉單筆最新狀態（確保同時有人報名或更新備註時保持最新）
-            fetchSingleGroup(seqId, true);
-            return;
+        } else {
+            currentGroup = { seqId: String(seqId) };
+            document.getElementById('gdSeqBadge').textContent = '#' + seqId;
+            document.getElementById('gdDate').textContent = '';
+            document.getElementById('gdTitle').textContent = '載入揪團資訊中...';
+            document.getElementById('gdContent').textContent = '';
+            document.getElementById('gdJoinedList').innerHTML = '';
         }
 
-        Swal.fire({ title: '讀取活動資訊中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-        fetchSingleGroup(seqId, false);
+        overlay.classList.add('is-open');
+        document.body.style.overflow = 'hidden';
+        setDetailLoading(true);
+        fetchSingleGroup(seqId, false, token);
     }
 
-    function fetchSingleGroup(seqId, silent) {
+    function fetchSingleGroup(seqId, silent, token) {
         callGasApi('group', 'getGroup', { seqId: seqId }, res => {
-            if (!silent) Swal.close();
+            if (token && token !== activeOpenToken) return;
+            setDetailLoading(false);
             if (!res || res.success === false) {
-                if (!silent) Swal.fire('提示', (res && res.error) || '找不到該揪團資訊或已結束', 'info');
+                if (!silent) {
+                    close();
+                    Swal.fire('提示', (res && res.error) || '找不到該揪團資訊或已結束', 'info');
+                }
                 return;
             }
 
@@ -59,14 +86,17 @@ window.PortalGroupDetail = (function() {
                 setTimeout(() => { if (leafletMap) leafletMap.invalidateSize(); }, 220);
             }
         }, err => {
+            if (token && token !== activeOpenToken) return;
+            setDetailLoading(false);
             if (!silent) {
-                Swal.close();
+                close();
                 Swal.fire('錯誤', '載入揪團詳情失敗：' + err, 'error');
             }
         });
     }
 
     function close() {
+        if (isDetailLoading) return;
         const overlay = document.getElementById('groupDetailOverlay');
         if (!overlay) return;
         overlay.classList.remove('is-open');
@@ -521,6 +551,8 @@ window.PortalGroupDetail = (function() {
     return {
         open,
         close,
+        handleOverlayClick,
+        isLocked: () => isDetailLoading,
         handleJoinGroup,
         handleUpdateNote,
         handleLeaveGroup,

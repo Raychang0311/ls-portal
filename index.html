@@ -54,6 +54,9 @@
                 <button type="button" class="nav__tab tab" data-tab="leftHistory" onclick="PortalApp.switchTab('leftHistory')">
                     <span>退群紀錄</span>
                 </button>
+                <button type="button" class="nav__tab tab" data-tab="other" onclick="PortalApp.switchTab('other')">
+                    <span>其他</span>
+                </button>
             </nav>
 
             <div class="nav__right">
@@ -93,13 +96,20 @@
                     </div>
                 </div>
 
-                <!-- 篩選列 (含滑動指示器) -->
+                <!-- 篩選列與搜尋列 (含滑動指示器) -->
                 <div class="jukebox-toolbar">
-                    <div class="filter-tabs tabs" id="jukeboxFilterTabs" role="tablist" aria-label="揪團篩選條件">
-                        <button type="button" class="filter-tab tab is-active" data-filter="all" role="tab" aria-selected="true" onclick="PortalJukebox.setFilter('all')">全部揪團</button>
-                        <button type="button" class="filter-tab tab" data-filter="joined" role="tab" aria-selected="false" onclick="PortalJukebox.setFilter('joined')">我已參加</button>
-                        <button type="button" class="filter-tab tab" data-filter="hosting" role="tab" aria-selected="false" onclick="PortalJukebox.setFilter('hosting')">我主揪</button>
-                        <button type="button" class="filter-tab tab" data-filter="available" role="tab" aria-selected="false" onclick="PortalJukebox.setFilter('available')">尚有名額</button>
+                    <div class="jukebox-toolbar-left">
+                        <div class="input-wrap jukebox-search-wrap">
+                            <span class="input-icon" aria-hidden="true">🔍</span>
+                            <input type="search" id="jukeboxSearchInput" class="field-input" placeholder="搜尋揪團標題、內文或地點" autocomplete="off" aria-label="搜尋揪團標題、內文或地點">
+                            <button type="button" id="clearJukeboxSearchBtn" class="btn-clear-field" onclick="PortalJukebox.clearSearch()" aria-label="清除搜尋">✕</button>
+                        </div>
+                        <div class="filter-tabs tabs" id="jukeboxFilterTabs" role="tablist" aria-label="揪團篩選條件">
+                            <button type="button" class="filter-tab tab is-active" data-filter="all" role="tab" aria-selected="true" onclick="PortalJukebox.setFilter('all')">全部揪團</button>
+                            <button type="button" class="filter-tab tab" data-filter="joined" role="tab" aria-selected="false" onclick="PortalJukebox.setFilter('joined')">我已參加</button>
+                            <button type="button" class="filter-tab tab" data-filter="hosting" role="tab" aria-selected="false" onclick="PortalJukebox.setFilter('hosting')">我主揪</button>
+                            <button type="button" class="filter-tab tab" data-filter="available" role="tab" aria-selected="false" onclick="PortalJukebox.setFilter('available')">尚有名額</button>
+                        </div>
                     </div>
                     <div class="jukebox-hint">
                         <span class="mono" id="jukeboxTrackReadout">TRACK 00 / 00</span>
@@ -177,14 +187,18 @@
                 <div class="directory-controls">
                     <div class="input-wrap">
                         <span class="input-icon" aria-hidden="true">🔍</span>
-                        <input type="search" id="memberSearchInput" class="field-input" placeholder="搜尋暱稱、居住地、職業、星座或成就稱號..." autocomplete="off" aria-label="搜尋群友">
+                        <input type="search" id="memberSearchInput" class="field-input" placeholder="搜尋暱稱、地點、職業、稱號" autocomplete="off" aria-label="搜尋群友">
                         <button type="button" id="clearMemberSearchBtn" class="btn-clear-field" onclick="PortalMembers.clearSearch()" aria-label="清除搜尋">✕</button>
                     </div>
 
-                    <div class="filter-tabs tabs" id="memberQuickFilters" role="tablist" aria-label="群友分類篩選">
+                    <div class="filter-tabs tabs" id="memberQuickFilters" role="tablist" aria-label="群友分類與排行">
                         <button type="button" class="filter-tab tab is-active" data-mfilter="all" onclick="PortalMembers.setQuickFilter('all')">全部群友</button>
                         <button type="button" class="filter-tab tab" data-mfilter="birthday" onclick="PortalMembers.setQuickFilter('birthday')">本月壽星</button>
                         <button type="button" class="filter-tab tab" data-mfilter="active" onclick="PortalMembers.setQuickFilter('active')">本月活躍</button>
+                        <button type="button" class="filter-tab tab" data-mfilter="unsend" onclick="PortalMembers.setQuickFilter('unsend')">收回排行</button>
+                        <button type="button" class="filter-tab tab" data-mfilter="host" onclick="PortalMembers.setQuickFilter('host')">揪團排行</button>
+                        <button type="button" class="filter-tab tab" data-mfilter="join" onclick="PortalMembers.setQuickFilter('join')">參團排行</button>
+                        <button type="button" class="filter-tab tab" data-mfilter="msg" onclick="PortalMembers.setQuickFilter('msg')">發言排行</button>
                     </div>
                 </div>
 
@@ -223,12 +237,12 @@
                     <div class="search-grid-2">
                         <div class="input-wrap">
                             <span class="input-icon" aria-hidden="true">🔍</span>
-                            <input type="search" id="ghKeywordInput" class="field-input" placeholder="搜尋活動標題或內文關鍵字..." autocomplete="off" aria-label="搜尋標題或內文關鍵字">
+                            <input type="search" id="ghKeywordInput" class="field-input" placeholder="搜尋標題或內文關鍵字" autocomplete="off" aria-label="搜尋標題或內文關鍵字">
                             <button type="button" id="ghClearKeywordBtn" class="btn-clear-field" aria-label="清除關鍵字">✕</button>
                         </div>
                         <div class="input-wrap">
                             <span class="input-icon" aria-hidden="true">👤</span>
-                            <input type="search" id="ghMemberInput" class="field-input" placeholder="篩選群友參加過的團（輸入暱稱）..." autocomplete="off" aria-label="篩選群友">
+                            <input type="search" id="ghMemberInput" class="field-input" placeholder="依群友暱稱篩選活動" autocomplete="off" aria-label="篩選群友">
                             <button type="button" id="ghClearMemberBtn" class="btn-clear-field" aria-label="清除群友篩選">✕</button>
                         </div>
                     </div>
@@ -278,7 +292,7 @@
                             <div id="ghPaneBody" class="pane-scroll-body">
                                 <h2 id="ghPaneTitle" class="detail-h2"></h2>
                                 <div class="kv-box">
-                                    <div class="kv-row"><span class="kv-k">活動時間</span><span id="ghPaneActivityTime" class="kv-v mono"></span></div>
+                                    <div class="kv-row kv-row--time"><span class="kv-k">活動時間</span><span id="ghPaneActivityTime" class="kv-v kv-v--time mono"></span></div>
                                     <div class="kv-row" id="ghPaneHostDateRow"><span class="kv-k">發起日期</span><span id="ghPaneHostDate" class="kv-v mono"></span></div>
                                 </div>
                                 <div id="ghPaneLocCard" class="loc-mini-card" style="display: none;">
@@ -350,6 +364,74 @@
                 <div id="lhFooter" class="list-footer"></div>
             </div>
         </section>
+
+        <!-- ================================================================
+             TAB 5: 其他（群規、請假外部連結）
+             ================================================================ -->
+        <section id="view-other" class="portal-view" aria-labelledby="otherViewTitle" hidden>
+            <div class="wrap">
+                <div class="section-head">
+                    <div class="section-head__titles">
+                        <div class="eyebrow-row">
+                            <span class="eyebrow-tag">COMMUNITY RESOURCES · MORE</span>
+                            <span class="mono count-pill">常用表單與規範</span>
+                        </div>
+                        <h1 id="otherViewTitle" class="page-h1">其他資源 <span class="muted">群組規範與日常申請通道。</span></h1>
+                    </div>
+                </div>
+
+                <div class="other-links-grid">
+                    <a href="https://reurl.cc/LWEO0L" target="_blank" rel="noopener noreferrer" class="other-resource-card is-rules" onclick="PortalApi.openExternalUrl(event, this.href)">
+                        <div class="other-card-top">
+                            <div class="other-icon-tile" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                                    <path d="M9 12l2 2 4-4"/>
+                                </svg>
+                            </div>
+                            <span class="mono other-eyebrow">GUIDELINES · 社群公約</span>
+                        </div>
+                        <div class="other-card-body">
+                            <h2 class="other-card-title">L&gt;S 社群群規與公約</h2>
+                            <p class="other-card-desc">查閱群組相處準則、揪團安全注意事項、活動禮儀與退群／違規規範，讓每位夥伴都能自在安心互動。</p>
+                        </div>
+                        <div class="other-card-foot">
+                            <span class="mono other-url-pill">reurl.cc/LWEO0L</span>
+                            <span class="other-cta-pill">
+                                <span>閱讀群規</span>
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+                            </span>
+                        </div>
+                    </a>
+
+                    <a href="https://forms.gle/EfBKT7GMyt1hq1ZT6" target="_blank" rel="noopener noreferrer" class="other-resource-card is-leave" onclick="PortalApi.openExternalUrl(event, this.href)">
+                        <div class="other-card-top">
+                            <div class="other-icon-tile" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="4" width="18" height="18" rx="2"/>
+                                    <line x1="16" y1="2" x2="16" y2="6"/>
+                                    <line x1="8" y1="2" x2="8" y2="6"/>
+                                    <line x1="3" y1="10" x2="21" y2="10"/>
+                                    <path d="M9 16l2 2 4-4"/>
+                                </svg>
+                            </div>
+                            <span class="mono other-eyebrow">LEAVE FORM · 請假回報</span>
+                        </div>
+                        <div class="other-card-body">
+                            <h2 class="other-card-title">社群請假登記表單</h2>
+                            <p class="other-card-desc">近期因工作忙碌、出國旅行或私人安排需要暫時潛水或休假時，可先透過 Google 表單快速向管理群報備。</p>
+                        </div>
+                        <div class="other-card-foot">
+                            <span class="mono other-url-pill">forms.gle/EfBKT7...</span>
+                            <span class="other-cta-pill">
+                                <span>前往填寫表單</span>
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+                            </span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </section>
     </main>
 
     <!-- 手機版底部固定導覽列 -->
@@ -368,21 +450,31 @@
         </button>
         <button type="button" class="dock-item" data-tab="leftHistory" onclick="PortalApp.switchTab('leftHistory')">
             <span class="dock-icon" aria-hidden="true">🚪</span>
-            <span class="dock-label">退群</span>
+            <span class="dock-label">退群紀錄</span>
+        </button>
+        <button type="button" class="dock-item" data-tab="other" onclick="PortalApp.switchTab('other')">
+            <span class="dock-icon" aria-hidden="true">📌</span>
+            <span class="dock-label">其他</span>
         </button>
     </nav>
 
     <!-- ================================================================
          MODAL 1: 揪團完整詳情抽屜 / 視窗
          ================================================================ -->
-    <div id="groupDetailOverlay" class="drawer-overlay" onclick="if(event.target===this) PortalGroupDetail.close()">
+    <div id="groupDetailOverlay" class="drawer-overlay" onclick="PortalGroupDetail.handleOverlayClick(event)">
         <div class="drawer-panel detail-drawer" role="dialog" aria-modal="true" aria-labelledby="gdTitle">
+            <div id="gdLoadingOverlay" class="gd-loading-overlay" aria-live="polite" hidden>
+                <div class="gd-loading-card">
+                    <div class="spinner"></div>
+                    <div class="gd-loading-text">正在載入揪團詳情與最新名單...</div>
+                </div>
+            </div>
             <div class="drawer-header">
                 <div class="drawer-header__meta">
                     <span class="mono seq-tag" id="gdSeqBadge">#00000</span>
                     <span class="status-pill" id="gdStatusBadge">進行中</span>
                 </div>
-                <button type="button" class="icon-close-btn" onclick="PortalGroupDetail.close()" aria-label="關閉詳情">✕</button>
+                <button type="button" id="gdCloseBtn" class="icon-close-btn" onclick="PortalGroupDetail.close()" aria-label="關閉詳情">✕</button>
             </div>
 
             <div class="drawer-body" id="gdBodyScroll">
@@ -651,7 +743,7 @@
             <div id="ghSheetBody" class="drawer-body">
                 <h2 id="ghSheetTitle" class="detail-h2"></h2>
                 <div class="kv-box">
-                    <div class="kv-row"><span class="kv-k">活動時間</span><span id="ghSheetActivityTime" class="kv-v mono"></span></div>
+                    <div class="kv-row kv-row--time"><span class="kv-k">活動時間</span><span id="ghSheetActivityTime" class="kv-v kv-v--time mono"></span></div>
                     <div class="kv-row" id="ghSheetHostDateRow"><span class="kv-k">發起日期</span><span id="ghSheetHostDate" class="kv-v mono"></span></div>
                 </div>
                 <div id="ghSheetLocCard" class="loc-mini-card" style="display: none;">

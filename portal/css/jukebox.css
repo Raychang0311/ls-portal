@@ -12,6 +12,26 @@
   margin-bottom: 18px;
 }
 
+.jukebox-toolbar-left {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  flex: 1 1 560px;
+  min-width: 0;
+}
+
+.jukebox-search-wrap {
+  flex: 1 1 250px;
+  max-width: 100%;
+}
+
+@media (min-width: 768px) {
+  .jukebox-search-wrap {
+    max-width: 300px;
+  }
+}
+
 .jukebox-hint {
   display: inline-flex;
   align-items: center;

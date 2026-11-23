@@ -6,6 +6,7 @@ window.PortalJukebox = (function() {
     const { Store, callGasApi, escapeHtml, updateNavSummary } = window.PortalApi;
 
     let currentFilter = 'all';
+    let searchQuery = '';
     let filteredGroups = [];
     let activeIndex = 0;
     let virtualIndex = 0;
@@ -108,6 +109,32 @@ window.PortalJukebox = (function() {
         window.addEventListener('resize', () => {
             if (filteredGroups.length > 0) apply3DTransforms();
         }, { passive: true });
+
+        const searchInput = document.getElementById('jukeboxSearchInput');
+        const clearBtn = document.getElementById('clearJukeboxSearchBtn');
+        if (searchInput) {
+            let searchTimer = null;
+            searchInput.addEventListener('input', () => {
+                searchQuery = searchInput.value.trim();
+                if (clearBtn) clearBtn.classList.toggle('visible', searchInput.value.length > 0);
+                clearTimeout(searchTimer);
+                searchTimer = setTimeout(() => {
+                    applyFilterAndRender(null, { animateToFirst: true });
+                }, 140);
+            });
+        }
+    }
+
+    function clearSearch() {
+        const searchInput = document.getElementById('jukeboxSearchInput');
+        const clearBtn = document.getElementById('clearJukeboxSearchBtn');
+        searchQuery = '';
+        if (searchInput) {
+            searchInput.value = '';
+            searchInput.focus();
+        }
+        if (clearBtn) clearBtn.classList.remove('visible');
+        applyFilterAndRender(null, { animateToFirst: true });
     }
 
     function clampIndex(idx) {
@@ -190,6 +217,8 @@ window.PortalJukebox = (function() {
 
     function computeFilteredGroups() {
         const uidLower = Store.currentUserId ? Store.currentUserId.toLowerCase() : '';
+        const q = searchQuery ? searchQuery.trim().toLowerCase() : '';
+
         return Store.groups.filter(g => {
             const maxL = parseInt(g.maxLimit, 10) || 99;
             const cur = (g.joinedList && g.joinedList.length) || 0;
@@ -197,20 +226,32 @@ window.PortalJukebox = (function() {
             const isHosting = uidLower && g.hostId && String(g.hostId).toLowerCase() === uidLower;
             const isJoined = uidLower && Array.isArray(g.joinedList) && g.joinedList.some(m => String(m.id).toLowerCase() === uidLower);
 
-            if (currentFilter === 'joined') return isJoined;
-            if (currentFilter === 'hosting') return isHosting;
-            if (currentFilter === 'available') return !isFull;
-            return true;
+            if (currentFilter === 'joined' && !isJoined) return false;
+            if (currentFilter === 'hosting' && !isHosting) return false;
+            if (currentFilter === 'available' && isFull) return false;
+
+            if (!q) return true;
+            const titleMatch = g.title && String(g.title).toLowerCase().includes(q);
+            const contentMatch = stripHtmlToText(g.content).toLowerCase().includes(q);
+            const locNameMatch = g.locationName && String(g.locationName).toLowerCase().includes(q);
+            const locAddrMatch = g.locationAddress && String(g.locationAddress).toLowerCase().includes(q);
+            return Boolean(titleMatch || contentMatch || locNameMatch || locAddrMatch);
         });
     }
 
-    function applyFilterAndRender(focusSeqId) {
+    function applyFilterAndRender(focusSeqId, options) {
+        const prevCenterSeqId = filteredGroups[activeIndex] ? String(filteredGroups[activeIndex].seqId) : '';
         filteredGroups = computeFilteredGroups();
+        const hasSearch = Boolean(searchQuery);
         const pill = document.getElementById('groupsCountPill');
         if (pill) {
-            pill.textContent = currentFilter === 'all'
-                ? `進行中 ${Store.groups.length} 團`
-                : `符合 ${filteredGroups.length} / ${Store.groups.length} 團`;
+            if (hasSearch) {
+                pill.textContent = `搜尋符合 ${filteredGroups.length} / ${Store.groups.length} 團`;
+            } else {
+                pill.textContent = currentFilter === 'all'
+                    ? `進行中 ${Store.groups.length} 團`
+                    : `符合 ${filteredGroups.length} / ${Store.groups.length} 團`;
+            }
         }
 
         const shellEl = document.getElementById('jukeboxShell');
@@ -222,15 +263,20 @@ window.PortalJukebox = (function() {
             if (shellEl) shellEl.style.display = 'none';
             if (emptyEl) {
                 emptyEl.style.display = 'block';
-                const emptyTitle = Store.groups.length === 0 ? '目前沒有進行中的揪團' : '此篩選條件下沒有揪團';
+                const emptyTitle = Store.groups.length === 0
+                    ? '目前沒有進行中的揪團'
+                    : (hasSearch ? `找不到符合「${escapeHtml(searchQuery)}」的揪團` : '此篩選條件下沒有揪團');
                 const emptyDesc = Store.groups.length === 0
                     ? '點選「＋ 發起揪團」成為第一個開團的主揪吧！'
-                    : (currentFilter !== 'all' && !Store.currentUserId ? '登入 LINE 後即可篩選您參加或主揪的揪團。' : '試著切換其他篩選標籤或發起一個新揪團。');
+                    : (hasSearch
+                        ? '試著更換標題、內文或地點關鍵字，或清除搜尋顯示全部。'
+                        : (currentFilter !== 'all' && !Store.currentUserId ? '登入 LINE 後即可篩選您參加或主揪的揪團。' : '試著切換其他篩選標籤或發起一個新揪團。'));
                 emptyEl.innerHTML = `
                     <div class="empty-emoji">${Store.groups.length === 0 ? '🎪' : '🔍'}</div>
                     <div class="empty-title">${emptyTitle}</div>
                     <div class="empty-desc">${emptyDesc}</div>
                     <div style="display:flex;justify-content:center;gap:10px;flex-wrap:wrap;">
+                        ${hasSearch ? '<button type="button" class="btn btn--secondary" onclick="PortalJukebox.clearSearch()">清除搜尋</button>' : ''}
                         ${currentFilter !== 'all' ? '<button type="button" class="btn btn--secondary" onclick="PortalJukebox.setFilter(\'all\')">顯示全部揪團</button>' : ''}
                         <button type="button" class="btn btn--primary" onclick="PortalGroupForm.openCreate()">＋ 發起新揪團</button>
                     </div>
@@ -242,6 +288,23 @@ window.PortalJukebox = (function() {
 
         if (emptyEl) emptyEl.style.display = 'none';
         if (shellEl) shellEl.style.display = 'block';
+
+        if (options && options.animateToFirst) {
+            const prevPos = prevCenterSeqId
+                ? filteredGroups.findIndex(g => String(g.seqId) === prevCenterSeqId)
+                : -1;
+            const startVirtual = prevPos > 0
+                ? prevPos
+                : (filteredGroups.length > 1 ? Math.min(filteredGroups.length - 1, 1.8) : 0.85);
+            activeIndex = 0;
+            virtualIndex = startVirtual;
+            targetIndex = 0;
+            renderCards(trackEl);
+            renderDialRail(dialEl);
+            apply3DTransforms();
+            goTo(0);
+            return;
+        }
 
         let targetIdx = activeIndex;
         if (focusSeqId) {
@@ -575,6 +638,7 @@ window.PortalJukebox = (function() {
         init,
         refresh,
         setFilter,
+        clearSearch,
         goTo,
         step,
         handleCardClick,

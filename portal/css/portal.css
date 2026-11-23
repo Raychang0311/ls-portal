@@ -288,7 +288,9 @@ img, svg {
   pointer-events: none;
   transform: translate(var(--x, 0px), var(--y, 0px)) scale(var(--sx, 1), var(--sy, 1));
   transform-origin: 0 0;
-  transition: transform var(--m-slide) var(--m-ease-io);
+  transition: transform var(--m-slide) var(--m-ease-io),
+              width var(--m-slide) var(--m-ease-io),
+              height var(--m-slide) var(--m-ease-io);
 }
 
 .nav__right {
@@ -556,12 +558,12 @@ img, svg {
 
 .input-icon {
   position: absolute;
-  left: 14px;
+  left: 13px;
   top: 50%;
   transform: translateY(-50%);
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   pointer-events: none;
-  opacity: 0.7;
+  opacity: 0.72;
 }
 
 .field-input, .field-select, .field-textarea {
@@ -580,8 +582,8 @@ img, svg {
 }
 
 .input-wrap .field-input {
-  padding-left: 40px;
-  padding-right: 40px;
+  padding-left: 38px;
+  padding-right: 36px;
 }
 
 .field-textarea {
@@ -701,7 +703,7 @@ img, svg {
   border-top: 1px solid rgba(255, 255, 255, 0.8);
   box-shadow: 0 -8px 26px -14px rgba(22, 34, 29, 0.16);
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   z-index: 500;
 }
 
@@ -746,8 +748,9 @@ img, svg {
 }
 
 .dock-label {
-  font-size: 0.8rem;
+  font-size: 0.74rem;
   line-height: 1.2;
+  white-space: nowrap;
 }
 
 /* ============================================================================
@@ -865,6 +868,7 @@ img, svg {
 }
 
 .drawer-panel {
+  position: relative;
   width: 100%;
   max-width: 720px;
   max-height: 90vh;

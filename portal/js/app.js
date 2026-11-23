@@ -3,7 +3,7 @@
  */
 window.PortalApp = (function() {
     const { extractQueryParam } = window.PortalApi;
-    const VALID_TABS = ['groups', 'members', 'groupHistory', 'leftHistory'];
+    const VALID_TABS = ['groups', 'members', 'groupHistory', 'leftHistory', 'other'];
     let currentTab = 'groups';
     let deepLinkHandled = false;
 
@@ -81,7 +81,9 @@ window.PortalApp = (function() {
             }
             const gd = document.getElementById('groupDetailOverlay');
             if (gd && gd.classList.contains('is-open')) {
-                window.PortalGroupDetail.close();
+                if (!window.PortalGroupDetail.isLocked || !window.PortalGroupDetail.isLocked()) {
+                    window.PortalGroupDetail.close();
+                }
                 return;
             }
             const ghSheet = document.getElementById('ghSheetOverlay');
