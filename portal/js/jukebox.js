@@ -636,17 +636,48 @@ window.PortalJukebox = (function() {
                 noteText: noteText
             }, res => {
                 if (res && res.success) {
-                    if (res.waitlisted) {
-                        Swal.fire('已加入候補名單！', `您的候補順位為第 ${res.waitlistPos || 1} 位 ⏳`, 'success');
-                    } else {
-                        Swal.fire('報名成功！', '您已加入本活動名單 🎉', 'success');
+                    const uid = String(Store.currentUserId || '').trim();
+                    const uidLower = uid.toLowerCase();
+                    if (uid && g) {
+                        const myEntry = {
+                            id: uid,
+                            name: Store.currentDisplayName || '我',
+                            pic: Store.currentUserPic || 'https://imgur.com/786FxAA.jpg',
+                            note: noteText || '',
+                            noteTime: '剛剛'
+                        };
+                        if (res.waitlisted) {
+                            const wList = (Array.isArray(g.waitlist) ? g.waitlist : []).filter(m => String(m.id).toLowerCase() !== uidLower);
+                            wList.push(Object.assign({}, myEntry, { waitlistPos: res.waitlistPos || (wList.length + 1) }));
+                            g.waitlist = wList.map((m, i) => Object.assign({}, m, { waitlistPos: i + 1 }));
+                            g.waitlistCount = g.waitlist.length;
+                        } else {
+                            const jList = (Array.isArray(g.joinedList) ? g.joinedList : []).filter(m => String(m.id).toLowerCase() !== uidLower);
+                            jList.push(myEntry);
+                            g.joinedList = jList;
+                            g.currentCount = jList.length;
+                        }
+                        if (Store.groupsLoaded) applyFilterAndRender(seqId);
                     }
-                    refresh(true, seqId);
+                    const alertOpts = res.waitlisted
+                        ? {
+                            title: '已加入候補名單！',
+                            text: `您的候補順位為第 ${res.waitlistPos || 1} 位 ⏳`,
+                            icon: 'success',
+                            confirmButtonColor: '#3a6e59'
+                        }
+                        : {
+                            title: '報名成功！',
+                            text: '您已加入本活動名單 🎉',
+                            icon: 'success',
+                            confirmButtonColor: '#3a6e59'
+                        };
+                    Swal.fire(alertOpts).then(() => refresh(true, seqId));
                 } else {
-                    Swal.fire('報名失敗', (res && res.error) || '發生未知錯誤', 'error');
+                    Swal.fire({ title: '報名失敗', text: (res && res.error) || '發生未知錯誤', icon: 'error', confirmButtonColor: '#3a6e59' });
                 }
             }, err => {
-                Swal.fire('系統錯誤', '報名失敗：' + err, 'error');
+                Swal.fire({ title: '系統錯誤', text: '報名失敗：' + err, icon: 'error', confirmButtonColor: '#3a6e59' });
             });
         });
     }
@@ -669,8 +700,8 @@ window.PortalJukebox = (function() {
             const idx = filteredGroups.findIndex(g => String(g.seqId) === String(seqId));
             if (idx !== -1) goTo(idx);
         },
-        rerenderCurrent: () => {
-            if (Store.groupsLoaded) applyFilterAndRender();
+        rerenderCurrent: focusSeqId => {
+            if (Store.groupsLoaded) applyFilterAndRender(focusSeqId || null);
         }
     };
 })();

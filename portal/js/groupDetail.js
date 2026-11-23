@@ -308,6 +308,65 @@ window.PortalGroupDetail = (function() {
         }
     }
 
+    function syncLocalGroupMembership(seqId, mode, waitlisted, noteText, waitlistPos) {
+        const uid = String(Store.currentUserId || '').trim();
+        if (!uid) return;
+        const uidLower = uid.toLowerCase();
+        const myEntry = {
+            id: uid,
+            name: Store.currentDisplayName || '我',
+            pic: Store.currentUserPic || 'https://imgur.com/786FxAA.jpg',
+            note: noteText || '',
+            noteTime: '剛剛'
+        };
+
+        const applyToTarget = target => {
+            if (!target) return;
+            const joined = Array.isArray(target.joinedList) ? target.joinedList.slice() : [];
+            const waitlist = Array.isArray(target.waitlist) ? target.waitlist.slice() : [];
+
+            if (mode === 'join') {
+                if (waitlisted) {
+                    const filteredWait = waitlist.filter(m => String(m.id).toLowerCase() !== uidLower);
+                    filteredWait.push(Object.assign({}, myEntry, { waitlistPos: waitlistPos || (filteredWait.length + 1) }));
+                    target.waitlist = filteredWait.map((m, i) => Object.assign({}, m, { waitlistPos: i + 1 }));
+                    target.waitlistCount = target.waitlist.length;
+                } else {
+                    const filteredJoined = joined.filter(m => String(m.id).toLowerCase() !== uidLower);
+                    filteredJoined.push(myEntry);
+                    target.joinedList = filteredJoined;
+                    target.currentCount = filteredJoined.length;
+                }
+            } else if (mode === 'leave') {
+                target.joinedList = joined.filter(m => String(m.id).toLowerCase() !== uidLower);
+                target.waitlist = waitlist.filter(m => String(m.id).toLowerCase() !== uidLower)
+                    .map((m, i) => Object.assign({}, m, { waitlistPos: i + 1 }));
+                target.currentCount = target.joinedList.length;
+                target.waitlistCount = target.waitlist.length;
+            }
+        };
+
+        if (currentGroup && String(currentGroup.seqId) === String(seqId)) {
+            applyToTarget(currentGroup);
+            renderGroup(currentGroup);
+        }
+        const cached = Store.groups.find(g => String(g.seqId) === String(seqId));
+        if (cached) applyToTarget(cached);
+        if (window.PortalJukebox && window.PortalJukebox.rerenderCurrent) {
+            window.PortalJukebox.rerenderCurrent(seqId);
+        }
+    }
+
+    function reloadGroupAfterPrompt(seqId) {
+        if (currentGroup && String(currentGroup.seqId) === String(seqId)) {
+            setDetailLoading(true);
+            fetchSingleGroup(seqId, false, ++activeOpenToken);
+        }
+        if (window.PortalJukebox && window.PortalJukebox.refresh) {
+            window.PortalJukebox.refresh(true, seqId);
+        }
+    }
+
     function handleJoinGroup() {
         if (!currentGroup || !Store.currentUserId) return;
         const seqId = currentGroup.seqId;
@@ -333,17 +392,25 @@ window.PortalGroupDetail = (function() {
 
             callGasApi('group', 'joinGroup', { seqId: seqId, userId: Store.currentUserId, noteText: noteText }, res => {
                 if (res && res.success) {
-                    if (res.waitlisted) {
-                        Swal.fire('已加入候補名單！', `您的候補順位為第 ${res.waitlistPos || 1} 位 ⏳`, 'success');
-                    } else {
-                        Swal.fire('報名成功！', '您已成功加入本活動名單 🎉', 'success');
-                    }
-                    fetchSingleGroup(seqId, true);
-                    window.PortalJukebox.refresh(true, seqId);
+                    syncLocalGroupMembership(seqId, 'join', Boolean(res.waitlisted), noteText, res.waitlistPos);
+                    const alertOpts = res.waitlisted
+                        ? {
+                            title: '已加入候補名單！',
+                            text: `您的候補順位為第 ${res.waitlistPos || 1} 位 ⏳`,
+                            icon: 'success',
+                            confirmButtonColor: '#3a6e59'
+                        }
+                        : {
+                            title: '報名成功！',
+                            text: '您已成功加入本活動名單 🎉',
+                            icon: 'success',
+                            confirmButtonColor: '#3a6e59'
+                        };
+                    Swal.fire(alertOpts).then(() => reloadGroupAfterPrompt(seqId));
                 } else {
-                    Swal.fire('報名失敗', (res && res.error) || '發生未知錯誤', 'error');
+                    Swal.fire({ title: '報名失敗', text: (res && res.error) || '發生未知錯誤', icon: 'error', confirmButtonColor: '#3a6e59' });
                 }
-            }, err => Swal.fire('系統錯誤', '報名失敗：' + err, 'error'));
+            }, err => Swal.fire({ title: '系統錯誤', text: '報名失敗：' + err, icon: 'error', confirmButtonColor: '#3a6e59' }));
         });
     }
 
@@ -355,13 +422,12 @@ window.PortalGroupDetail = (function() {
         Swal.fire({ title: '更新備註中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
         callGasApi('group', 'updateNote', { seqId: seqId, userId: Store.currentUserId, noteText: noteText }, res => {
             if (res && res.success) {
-                Swal.fire('更新成功！', '您的備註已儲存', 'success');
-                fetchSingleGroup(seqId, true);
-                window.PortalJukebox.refresh(true, seqId);
+                Swal.fire({ title: '更新成功！', text: '您的備註已儲存', icon: 'success', confirmButtonColor: '#3a6e59' })
+                    .then(() => reloadGroupAfterPrompt(seqId));
             } else {
-                Swal.fire('更新失敗', (res && res.error) || '發生未知錯誤', 'error');
+                Swal.fire({ title: '更新失敗', text: (res && res.error) || '發生未知錯誤', icon: 'error', confirmButtonColor: '#3a6e59' });
             }
-        }, err => Swal.fire('系統錯誤', '更新備註失敗：' + err, 'error'));
+        }, err => Swal.fire({ title: '系統錯誤', text: '更新備註失敗：' + err, icon: 'error', confirmButtonColor: '#3a6e59' }));
     }
 
     function handleLeaveGroup() {
@@ -386,13 +452,17 @@ window.PortalGroupDetail = (function() {
 
             callGasApi('group', 'leaveGroup', { seqId: seqId, userId: Store.currentUserId }, res => {
                 if (res && res.success) {
-                    Swal.fire('已退出', res.leftType === 'waitlist' ? '您已退出本活動候補名單' : '您已退出本揪團活動', 'info');
-                    fetchSingleGroup(seqId, true);
-                    window.PortalJukebox.refresh(true, seqId);
+                    syncLocalGroupMembership(seqId, 'leave', false, '', 0);
+                    Swal.fire({
+                        title: '已退出',
+                        text: res.leftType === 'waitlist' ? '您已退出本活動候補名單' : '您已退出本揪團活動',
+                        icon: 'info',
+                        confirmButtonColor: '#3a6e59'
+                    }).then(() => reloadGroupAfterPrompt(seqId));
                 } else {
-                    Swal.fire('退出失敗', (res && res.error) || '發生未知錯誤', 'error');
+                    Swal.fire({ title: '退出失敗', text: (res && res.error) || '發生未知錯誤', icon: 'error', confirmButtonColor: '#3a6e59' });
                 }
-            }, err => Swal.fire('系統錯誤', '退出失敗：' + err, 'error'));
+            }, err => Swal.fire({ title: '系統錯誤', text: '退出失敗：' + err, icon: 'error', confirmButtonColor: '#3a6e59' }));
         });
     }
 
