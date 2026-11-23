@@ -334,12 +334,6 @@ window.PortalJukebox = (function() {
         if (isHost) return { text: '👑 我是主揪', cls: '' };
         if (isJoined) return { text: '✅ 已報名', cls: '' };
         if (waitIdx !== -1) return { text: `⏳ 候補 #${waitIdx + 1}`, cls: 'is-soon' };
-        if (isFull) {
-            return {
-                text: waitlist.length > 0 ? `⛔ 已額滿 · 候補 ${waitlist.length}` : '⛔ 已額滿',
-                cls: 'is-full'
-            };
-        }
 
         if (g.startDate) {
             const diffHours = (new Date(g.startDate).getTime() - Date.now()) / 36e5;
@@ -349,6 +343,12 @@ window.PortalJukebox = (function() {
                 const days = Math.ceil(diffHours / 24);
                 return { text: `🗓️ ${days} 天後`, cls: '' };
             }
+        }
+        if (isFull) {
+            return {
+                text: waitlist.length > 0 ? `⛔ 已額滿 · 候補 ${waitlist.length}` : '⛔ 已額滿',
+                cls: 'is-full'
+            };
         }
         return { text: '開放報名', cls: '' };
     }
@@ -406,7 +406,7 @@ window.PortalJukebox = (function() {
                 <article class="jukebox-card ${idx === activeIndex ? 'is-center' : ''}" data-jb-idx="${idx}" onclick="PortalJukebox.handleCardClick(${idx}, '${escapeHtml(g.seqId)}')">
                     <div>
                         <div class="jb-top">
-                            <span class="jb-track-id">${trackNum} / ${totalStr} · #${escapeHtml(g.seqId)}</span>
+                            <span class="jb-track-id">${trackNum} / ${totalStr}</span>
                             <span class="jb-status-badge ${badge.cls}">${escapeHtml(badge.text)}</span>
                         </div>
                         <h2 class="jb-title">${escapeHtml(g.title || '揪團活動')}</h2>

@@ -38,7 +38,6 @@ window.PortalGroupDetail = (function() {
             renderGroup(cached);
         } else {
             currentGroup = { seqId: String(seqId) };
-            document.getElementById('gdSeqBadge').textContent = '#' + seqId;
             document.getElementById('gdDate').textContent = '';
             document.getElementById('gdTitle').textContent = '載入揪團資訊中...';
             document.getElementById('gdContent').textContent = '';
@@ -111,7 +110,6 @@ window.PortalGroupDetail = (function() {
     function renderGroup(g) {
         currentGroup = g;
 
-        document.getElementById('gdSeqBadge').textContent = '#' + (g.seqId || '');
         document.getElementById('gdDate').textContent = window.PortalApi.formatSmartDateRange(g.startDate, g.endDate, g.date);
         document.getElementById('gdTitle').textContent = g.title || '揪團活動';
         document.getElementById('gdContent').innerHTML = replaceLinks(g.content || '');
