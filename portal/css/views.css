@@ -792,8 +792,8 @@
   width: 68px;
   height: 68px;
   border-radius: 50%;
-  padding: 2px;
-  background: linear-gradient(135deg, var(--p-accent), var(--p-teal));
+  padding: 2.5px;
+  background: linear-gradient(135deg, #f43f5e, #f59e0b, #10b981, #3b82f6, #8b5cf6);
 }
 
 .dir-avatar-wrap img {
@@ -802,7 +802,7 @@
   border-radius: 50%;
   object-fit: cover;
   background: #e2ebe7;
-  border: 2px solid var(--p-surface);
+  border: 2px solid #ffffff;
 }
 
 .dir-active-pill {
@@ -1333,18 +1333,57 @@ mark.hl {
   cursor: wait;
 }
 
-.gd-loading-card {
+.gd-ls-loader {
   display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 20px;
-  border-radius: var(--r-md);
+  align-items: baseline;
+  gap: 2px;
+  padding: 16px 28px;
+  border-radius: var(--r-lg);
   background: var(--glass-bg-strong);
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow);
-  color: var(--p-ink);
-  font-size: 0.94rem;
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-size: clamp(1.85rem, 4.5vw, 2.35rem);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  user-select: none;
+}
+
+.gd-ls-word {
+  color: var(--p-action);
+}
+
+.gd-ls-dots {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 2px;
+  margin-left: 2px;
+}
+
+.gd-ls-dot {
+  display: inline-block;
+  color: var(--p-teal);
+  animation: gdDotJump 1.15s var(--m-ease-io) infinite;
+}
+
+.gd-ls-dot:nth-child(2) {
+  animation-delay: 0.16s;
+}
+
+.gd-ls-dot:nth-child(3) {
+  animation-delay: 0.32s;
+}
+
+@keyframes gdDotJump {
+  0%, 55%, 100% {
+    transform: translateY(0);
+    opacity: 0.55;
+  }
+  26% {
+    transform: translateY(-9px);
+    opacity: 1;
+  }
 }
 
 /* ============================================================================

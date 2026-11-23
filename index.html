@@ -101,7 +101,7 @@
                     <div class="jukebox-toolbar-left">
                         <div class="input-wrap jukebox-search-wrap">
                             <span class="input-icon" aria-hidden="true">🔍</span>
-                            <input type="search" id="jukeboxSearchInput" class="field-input" placeholder="搜尋揪團標題、內文或地點" autocomplete="off" aria-label="搜尋揪團標題、內文或地點">
+                            <input type="text" inputmode="search" enterkeyhint="search" id="jukeboxSearchInput" class="field-input" placeholder="搜尋揪團標題、內文或地點" autocomplete="off" aria-label="搜尋揪團標題、內文或地點">
                             <button type="button" id="clearJukeboxSearchBtn" class="btn-clear-field" onclick="PortalJukebox.clearSearch()" aria-label="清除搜尋">✕</button>
                         </div>
                         <div class="filter-tabs tabs" id="jukeboxFilterTabs" role="tablist" aria-label="揪團篩選條件">
@@ -138,7 +138,6 @@
                 <div id="jukeboxShell" class="jukebox-shell" style="display: none;">
                     <div class="jukebox-stage" id="jukeboxStage" tabindex="0" aria-roledescription="carousel" aria-label="進行中揪團旋轉點唱機">
                         <div class="jukebox-stage-chrome" aria-hidden="true">
-                            <span class="mono stage-chrome-label">L&gt;S JUKEBOX · 3D DECK</span>
                             <span class="stage-chrome-dot">LIVE SYNC</span>
                         </div>
                         <!-- 建築感同心圓弧刻度裝飾線 -->
@@ -187,7 +186,7 @@
                 <div class="directory-controls">
                     <div class="input-wrap">
                         <span class="input-icon" aria-hidden="true">🔍</span>
-                        <input type="search" id="memberSearchInput" class="field-input" placeholder="搜尋暱稱、地點、職業、稱號" autocomplete="off" aria-label="搜尋群友">
+                        <input type="text" inputmode="search" enterkeyhint="search" id="memberSearchInput" class="field-input" placeholder="搜尋暱稱、地點、職業、稱號" autocomplete="off" aria-label="搜尋群友">
                         <button type="button" id="clearMemberSearchBtn" class="btn-clear-field" onclick="PortalMembers.clearSearch()" aria-label="清除搜尋">✕</button>
                     </div>
 
@@ -237,12 +236,12 @@
                     <div class="search-grid-2">
                         <div class="input-wrap">
                             <span class="input-icon" aria-hidden="true">🔍</span>
-                            <input type="search" id="ghKeywordInput" class="field-input" placeholder="搜尋標題或內文關鍵字" autocomplete="off" aria-label="搜尋標題或內文關鍵字">
+                            <input type="text" inputmode="search" enterkeyhint="search" id="ghKeywordInput" class="field-input" placeholder="搜尋標題或內文關鍵字" autocomplete="off" aria-label="搜尋標題或內文關鍵字">
                             <button type="button" id="ghClearKeywordBtn" class="btn-clear-field" aria-label="清除關鍵字">✕</button>
                         </div>
                         <div class="input-wrap">
                             <span class="input-icon" aria-hidden="true">👤</span>
-                            <input type="search" id="ghMemberInput" class="field-input" placeholder="依群友暱稱篩選活動" autocomplete="off" aria-label="篩選群友">
+                            <input type="text" inputmode="search" enterkeyhint="search" id="ghMemberInput" class="field-input" placeholder="依群友暱稱篩選活動" autocomplete="off" aria-label="篩選群友">
                             <button type="button" id="ghClearMemberBtn" class="btn-clear-field" aria-label="清除群友篩選">✕</button>
                         </div>
                     </div>
@@ -344,7 +343,7 @@
                 <div class="control-panel">
                     <div class="input-wrap">
                         <span class="input-icon" aria-hidden="true">🔍</span>
-                        <input type="search" id="lhSearchInput" class="field-input" placeholder="搜尋離群群友暱稱..." autocomplete="off" aria-label="搜尋離群群友暱稱">
+                        <input type="text" inputmode="search" enterkeyhint="search" id="lhSearchInput" class="field-input" placeholder="搜尋離群群友暱稱..." autocomplete="off" aria-label="搜尋離群群友暱稱">
                         <button type="button" id="lhClearSearchBtn" class="btn-clear-field" aria-label="清除搜尋">✕</button>
                     </div>
                     <div class="filter-bar-row">
@@ -463,10 +462,9 @@
          ================================================================ -->
     <div id="groupDetailOverlay" class="drawer-overlay" onclick="PortalGroupDetail.handleOverlayClick(event)">
         <div class="drawer-panel detail-drawer" role="dialog" aria-modal="true" aria-labelledby="gdTitle">
-            <div id="gdLoadingOverlay" class="gd-loading-overlay" aria-live="polite" hidden>
-                <div class="gd-loading-card">
-                    <div class="spinner"></div>
-                    <div class="gd-loading-text">正在載入揪團詳情與最新名單...</div>
+            <div id="gdLoadingOverlay" class="gd-loading-overlay" role="status" aria-label="載入中" hidden>
+                <div class="gd-ls-loader" aria-hidden="true">
+                    <span class="gd-ls-word">L&gt;S</span><span class="gd-ls-dots"><span class="gd-ls-dot">.</span><span class="gd-ls-dot">.</span><span class="gd-ls-dot">.</span></span>
                 </div>
             </div>
             <div class="drawer-header">
@@ -686,7 +684,7 @@
                                 <div class="gf-member-toolbar">
                                     <div class="input-wrap" style="flex:1;">
                                         <span class="input-icon" aria-hidden="true">🔍</span>
-                                        <input type="search" id="gfMemberSearchInput" class="field-input" placeholder="搜尋群友名稱..." autocomplete="off">
+                                        <input type="text" inputmode="search" enterkeyhint="search" id="gfMemberSearchInput" class="field-input" placeholder="搜尋群友名稱..." autocomplete="off">
                                         <button type="button" id="gfMemberSearchClear" class="btn-clear-field" onclick="PortalGroupForm.clearMemberSearch()" aria-label="清除搜尋">✕</button>
                                     </div>
                                     <button type="button" id="gfOnlySelectedBtn" class="chip-btn" onclick="PortalGroupForm.toggleOnlySelected()">僅看已選</button>
@@ -790,6 +788,13 @@
             </div>
 
             <div class="profile-modal-body" id="profileModalBody">
+                <div id="selfEditArea" style="display: none;">
+                    <button type="button" class="btn btn--primary btn--full" onclick="PortalProfile.openEditModal()">✏️ 編輯我的個人名片</button>
+                </div>
+                <div id="guestEditHint" style="display: none; text-align: center;">
+                    <button type="button" class="btn btn--secondary btn--full" onclick="PortalAuth.triggerLogin()">🔑 使用 LINE 登入驗證以編輯本人名片</button>
+                </div>
+
                 <div class="info-grid">
                     <div class="info-cell"><span class="info-cell-title">🎂 年齡</span><span class="info-cell-val" id="cardAge">秘密 🤫</span></div>
                     <div class="info-cell"><span class="info-cell-title">✨ 星座</span><span class="info-cell-val" id="cardZodiac">--</span></div>
@@ -825,13 +830,6 @@
                         <div class="stat-block is-month"><div class="stat-num" id="statMonthMsg">0</div><div class="stat-lbl">本月活躍</div></div>
                         <div class="stat-block is-year"><div class="stat-num" id="statYearMsg">0</div><div class="stat-lbl">年度活躍</div></div>
                     </div>
-                </div>
-
-                <div id="selfEditArea" style="display: none;">
-                    <button type="button" class="btn btn--primary btn--full" onclick="PortalProfile.openEditModal()">✏️ 編輯我的個人名片</button>
-                </div>
-                <div id="guestEditHint" style="display: none; text-align: center; padding-top: 8px;">
-                    <button type="button" class="btn btn--secondary btn--full" onclick="PortalAuth.triggerLogin()">🔑 使用 LINE 登入驗證以編輯本人名片</button>
                 </div>
             </div>
         </div>

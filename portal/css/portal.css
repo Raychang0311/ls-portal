@@ -586,6 +586,16 @@ img, svg {
   padding-right: 36px;
 }
 
+/* 隱藏瀏覽器原生 search 清除叉號，保留自訂 .btn-clear-field 單一清除鈕 */
+.field-input[type="search"]::-webkit-search-decoration,
+.field-input[type="search"]::-webkit-search-cancel-button,
+.field-input[type="search"]::-webkit-search-results-button,
+.field-input[type="search"]::-webkit-search-results-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+  display: none;
+}
+
 .field-textarea {
   min-height: 112px;
   resize: vertical;
