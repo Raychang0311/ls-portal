@@ -359,6 +359,10 @@ window.PortalGroupForm = (function() {
         document.getElementById('gfMemberSearchInput').value = '';
         onlySelectedFilter = false;
         document.getElementById('gfOnlySelectedBtn').classList.remove('is-active');
+        const wlBox = document.getElementById('gfWaitlistBox');
+        if (wlBox) wlBox.classList.add('hidden');
+        const wlList = document.getElementById('gfWaitlistList');
+        if (wlList) wlList.innerHTML = '';
         clearLocation();
     }
 
@@ -368,6 +372,8 @@ window.PortalGroupForm = (function() {
         document.getElementById('gfMemberLabel').textContent = '👥 內建成員';
         document.getElementById('gfSubmitBtn').textContent = '送出建立揪團';
         document.getElementById('gfSeqId').value = '';
+        const wlBox = document.getElementById('gfWaitlistBox');
+        if (wlBox) wlBox.classList.add('hidden');
 
         const targetUid = String(userId).trim().toLowerCase();
         let hostVal = '';
@@ -408,6 +414,13 @@ window.PortalGroupForm = (function() {
 
         const hostLower = String(info.hostId || '').trim().toLowerCase();
         const joinedSet = new Set((info.joinedList || []).map(id => String(id).trim().toLowerCase()));
+        const waitlistArr = Array.isArray(info.waitlist) ? info.waitlist : [];
+        const waitlistPosMap = new Map();
+        waitlistArr.forEach((w, i) => {
+            const wId = String(w?.id || w || '').trim().toLowerCase();
+            if (wId && !waitlistPosMap.has(wId)) waitlistPosMap.set(wId, Number(w?.waitlistPos) || (i + 1));
+        });
+
         let hostVal = '';
         let hostName = '主揪';
         let html = '';
@@ -421,13 +434,29 @@ window.PortalGroupForm = (function() {
                 hostName = m.name || hostName;
             } else {
                 const isJoined = joinedSet.has(mLower);
+                const wlPos = !isJoined ? waitlistPosMap.get(mLower) : null;
                 html += `
                     <div class="gf-member-option" data-name="${escapeHtmlAttr((m.name || '').toLowerCase())}">
                         <input type="checkbox" name="gfInitMember" id="gf_cb_${idx}" value="${escapeHtmlAttr(rawVal)}" ${isJoined ? 'checked disabled' : ''}>
-                        <label class="gf-member-chip" for="gf_cb_${idx}">${escapeHtml(m.name)}${isJoined ? ' (已入)' : ''}</label>
+                        <label class="gf-member-chip${wlPos ? ' is-waitlisted' : ''}" for="gf_cb_${idx}">${escapeHtml(m.name)}${isJoined ? ' (已入)' : ''}${wlPos ? `<span class="gf-chip-wl">(候補 #${wlPos})</span>` : ''}</label>
                     </div>`;
             }
         });
+
+        const wlBox = document.getElementById('gfWaitlistBox');
+        const wlCount = document.getElementById('gfWaitlistCountBadge');
+        const wlList = document.getElementById('gfWaitlistList');
+        if (wlBox && wlCount && wlList) {
+            wlBox.classList.remove('hidden');
+            wlCount.textContent = `${waitlistArr.length} 人候補`;
+            wlList.innerHTML = waitlistArr.length > 0
+                ? waitlistArr.map((w, i) => {
+                    const pos = Number(w?.waitlistPos) || (i + 1);
+                    const wName = escapeHtml(w?.name || w?.id || String(w));
+                    return `<span class="gf-waitlist-chip"><span class="gf-waitlist-rank">#${pos}</span><span>${wName}</span></span>`;
+                }).join('')
+                : '<span class="gf-waitlist-empty">目前無人候補</span>';
+        }
 
         html += '<div id="gfMemberEmpty" style="grid-column:1/-1;text-align:center;color:var(--p-muted);padding:14px 0;display:none;">查無符合群友</div>';
         document.getElementById('gfHostChip').textContent = '主揪：' + hostName;

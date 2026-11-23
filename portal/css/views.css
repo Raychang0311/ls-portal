@@ -321,6 +321,45 @@
   border-radius: var(--r-sm);
   border: 1px solid var(--line);
   background: var(--p-surface-tint);
+  position: relative;
+}
+
+.gd-member-item.is-waitlist {
+  background: rgba(254, 243, 199, 0.36);
+  border-color: color-mix(in oklab, var(--p-amber) 24%, transparent);
+}
+
+.gd-wait-order {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--p-amber-soft);
+  color: var(--p-amber);
+  border: 1px solid color-mix(in oklab, var(--p-amber) 28%, transparent);
+}
+
+.gd-waitlist-status-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: var(--r-sm);
+  background: var(--p-amber-soft);
+  border: 1px solid color-mix(in oklab, var(--p-amber) 28%, transparent);
+  color: var(--p-amber);
+  font-size: 0.88rem;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.count-pill.is-wait {
+  background: var(--p-amber-soft);
+  color: var(--p-amber);
+  border-color: color-mix(in oklab, var(--p-amber) 28%, transparent);
 }
 
 .gd-member-avatar-wrap {
@@ -655,6 +694,70 @@
   color: var(--p-muted);
   border-color: var(--line);
   cursor: not-allowed;
+}
+
+.gf-member-chip.is-waitlisted {
+  border-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.08);
+  flex-direction: column;
+  gap: 2px;
+}
+
+.gf-chip-wl {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #b45309;
+  line-height: 1.1;
+}
+
+.gf-waitlist-box {
+  border-color: rgba(245, 158, 11, 0.35);
+  background: rgba(255, 251, 235, 0.75);
+}
+
+.gf-waitlist-count {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.gf-waitlist-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.gf-waitlist-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #ffffff;
+  border: 1px solid #fcd34d;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #78350f;
+}
+
+.gf-waitlist-rank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #f59e0b;
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.gf-waitlist-empty {
+  width: 100%;
+  font-size: 0.85rem;
+  color: var(--p-muted);
+  padding: 6px 0;
 }
 
 .gf-state-box {

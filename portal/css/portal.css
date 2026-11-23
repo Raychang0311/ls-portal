@@ -986,6 +986,13 @@ img, svg {
   padding-right: 2px;
 }
 
+.edit-hint {
+  font-size: 0.78rem;
+  color: var(--p-muted);
+  line-height: 1.5;
+  margin-top: 4px;
+}
+
 /* 數位名片 Modal */
 .profile-card-modal {
   width: 100%;

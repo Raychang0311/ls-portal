@@ -325,13 +325,21 @@ window.PortalJukebox = (function() {
         const uidLower = Store.currentUserId ? Store.currentUserId.toLowerCase() : '';
         const isHost = uidLower && g.hostId && String(g.hostId).toLowerCase() === uidLower;
         const isJoined = uidLower && Array.isArray(g.joinedList) && g.joinedList.some(m => String(m.id).toLowerCase() === uidLower);
+        const waitlist = Array.isArray(g.waitlist) ? g.waitlist : [];
+        const waitIdx = uidLower ? waitlist.findIndex(m => String(m.id).toLowerCase() === uidLower) : -1;
         const maxL = parseInt(g.maxLimit, 10) || 99;
         const cur = (g.joinedList && g.joinedList.length) || 0;
         const isFull = maxL !== 99 && cur >= maxL;
 
         if (isHost) return { text: '👑 我是主揪', cls: '' };
         if (isJoined) return { text: '✅ 已報名', cls: '' };
-        if (isFull) return { text: '⛔ 已額滿', cls: 'is-full' };
+        if (waitIdx !== -1) return { text: `⏳ 候補 #${waitIdx + 1}`, cls: 'is-soon' };
+        if (isFull) {
+            return {
+                text: waitlist.length > 0 ? `⛔ 已額滿 · 候補 ${waitlist.length}` : '⛔ 已額滿',
+                cls: 'is-full'
+            };
+        }
 
         if (g.startDate) {
             const diffHours = (new Date(g.startDate).getTime() - Date.now()) / 36e5;
@@ -366,11 +374,13 @@ window.PortalJukebox = (function() {
         filteredGroups.forEach((g, idx) => {
             const badge = getStatusBadge(g);
             const joined = Array.isArray(g.joinedList) ? g.joinedList : [];
+            const waitlist = Array.isArray(g.waitlist) ? g.waitlist : [];
             const curCount = joined.length;
             const maxL = parseInt(g.maxLimit, 10) || 99;
             const isFull = maxL !== 99 && curCount >= maxL;
             const pct = maxL === 99 ? Math.min(100, curCount * 10) : Math.min(100, Math.round((curCount / maxL) * 100));
             const isJoined = uidLower && joined.some(m => String(m.id).toLowerCase() === uidLower);
+            const waitIdx = uidLower ? waitlist.findIndex(m => String(m.id).toLowerCase() === uidLower) : -1;
             const excerpt = stripHtmlToText(g.content) || '點擊查看活動完整說明與地圖資訊';
 
             const stackItems = joined.slice(0, 4).map(m =>
@@ -384,8 +394,10 @@ window.PortalJukebox = (function() {
             let quickBtnHtml = '';
             if (isJoined) {
                 quickBtnHtml = `<button type="button" class="btn btn--primary btn--compact" onclick="event.stopPropagation(); PortalGroupDetail.open('${escapeHtml(g.seqId)}')">已報名 · 詳情</button>`;
+            } else if (waitIdx !== -1) {
+                quickBtnHtml = `<button type="button" class="btn btn--secondary btn--compact" onclick="event.stopPropagation(); PortalGroupDetail.open('${escapeHtml(g.seqId)}')">已候補 #${waitIdx + 1} · 詳情</button>`;
             } else if (isFull) {
-                quickBtnHtml = `<button type="button" class="btn btn--secondary btn--compact" disabled>名額已滿</button>`;
+                quickBtnHtml = `<button type="button" class="btn btn--secondary btn--compact" onclick="event.stopPropagation(); PortalJukebox.quickJoin('${escapeHtml(g.seqId)}')">⏳ 登記候補${waitlist.length > 0 ? ' (' + waitlist.length + ')' : ''}</button>`;
             } else {
                 quickBtnHtml = `<button type="button" class="btn btn--primary btn--compact" onclick="event.stopPropagation(); PortalJukebox.quickJoin('${escapeHtml(g.seqId)}')">🙋‍♂️ 立即報名</button>`;
             }
@@ -597,29 +609,38 @@ window.PortalJukebox = (function() {
         const g = Store.groups.find(item => String(item.seqId) === String(seqId));
         if (!g) return;
 
+        const maxL = parseInt(g.maxLimit, 10) || 99;
+        const curCount = (g.joinedList && g.joinedList.length) || 0;
+        const isFull = maxL !== 99 && curCount >= maxL;
+
         Swal.fire({
-            title: `報名「${escapeHtml(g.title)}」`,
+            title: isFull ? `登記候補「${escapeHtml(g.title)}」` : `報名「${escapeHtml(g.title)}」`,
+            text: isFull ? '目前正取名額已滿，確定要依序加入候補名單嗎？有空缺時將自動遞補並標註通知。' : '',
             input: 'text',
             inputLabel: '活動備註（選填，例如：開車+1、晚到半小時）',
-            inputPlaceholder: '輸入備註文字，或留空直接報名...',
+            inputPlaceholder: '輸入備註文字，或留空直接送出...',
             inputAttributes: { maxlength: 50 },
             showCancelButton: true,
             confirmButtonColor: '#3a6e59',
             cancelButtonColor: '#6b7280',
-            confirmButtonText: '確認報名',
+            confirmButtonText: isFull ? '確認登記候補' : '確認報名',
             cancelButtonText: '取消'
         }).then(result => {
             if (!result.isConfirmed) return;
             const noteText = String(result.value || '').trim();
 
-            Swal.fire({ title: '報名處理中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            Swal.fire({ title: isFull ? '登記候補中...' : '報名處理中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
             callGasApi('group', 'joinGroup', {
                 seqId: seqId,
                 userId: Store.currentUserId,
                 noteText: noteText
             }, res => {
                 if (res && res.success) {
-                    Swal.fire('報名成功！', '您已加入本活動名單 🎉', 'success');
+                    if (res.waitlisted) {
+                        Swal.fire('已加入候補名單！', `您的候補順位為第 ${res.waitlistPos || 1} 位 ⏳`, 'success');
+                    } else {
+                        Swal.fire('報名成功！', '您已加入本活動名單 🎉', 'success');
+                    }
                     refresh(true, seqId);
                 } else {
                     Swal.fire('報名失敗', (res && res.error) || '發生未知錯誤', 'error');

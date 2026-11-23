@@ -557,6 +557,16 @@
                     </div>
                     <div class="gd-member-grid" id="gdJoinedList"></div>
                 </div>
+
+                <!-- 候補名單 -->
+                <div class="gd-section" id="gdWaitlistSection" style="display: none;">
+                    <div class="gd-joined-head">
+                        <div class="gd-section-label" style="margin:0;">
+                            ⏳ 候補名單 <span class="mono count-pill is-wait" id="gdWaitlistCountDisplay">0 人</span>
+                        </div>
+                    </div>
+                    <div class="gd-member-grid" id="gdWaitlistList"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -690,6 +700,15 @@
                                     <button type="button" id="gfOnlySelectedBtn" class="chip-btn" onclick="PortalGroupForm.toggleOnlySelected()">僅看已選</button>
                                 </div>
                                 <div id="gfInitMemberBlock" class="gf-member-grid"></div>
+                            </div>
+
+                            <div id="gfWaitlistBox" class="form-section-box gf-waitlist-box hidden">
+                                <div class="gf-member-head">
+                                    <label style="margin:0;">⏳ 目前候補名單</label>
+                                    <span class="mono count-pill gf-waitlist-count" id="gfWaitlistCountBadge">0 人候補</span>
+                                </div>
+                                <div id="gfWaitlistList" class="gf-waitlist-list"></div>
+                                <p class="field-hint">依照登記順位排列；若調高人數上限，系統會依序自動遞補並於群組通知。</p>
                             </div>
 
                             <div class="gf-submit-wrap">

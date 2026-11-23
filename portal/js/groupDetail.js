@@ -194,18 +194,7 @@ window.PortalGroupDetail = (function() {
         if (scrollBody) scrollBody.scrollTop = 0;
     }
 
-    function renderJoinedMembers() {
-        if (!currentGroup) return;
-        const container = document.getElementById('gdJoinedList');
-        const list = Array.isArray(currentGroup.joinedList) ? currentGroup.joinedList : [];
-        const maxL = parseInt(currentGroup.maxLimit, 10) || 99;
-        document.getElementById('gdCountDisplay').textContent = `${list.length} / ${maxL === 99 ? '不限' : maxL}`;
-
-        if (list.length === 0) {
-            container.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--p-muted);padding:20px 0;">尚無人報名</div>';
-            return;
-        }
-
+    function buildMemberGridHtml(list, isWaitlist) {
         const uidLower = Store.currentUserId ? Store.currentUserId.toLowerCase() : '';
         let html = '';
         list.forEach((m, idx) => {
@@ -213,18 +202,52 @@ window.PortalGroupDetail = (function() {
             const noteText = (m.note || '').trim();
             const safePic = escapeHtml(m.pic || 'https://imgur.com/786FxAA.jpg');
             const safeId = escapeHtml(m.id || '');
+            const orderTag = isWaitlist ? `<span class="gd-wait-order mono">#${idx + 1}</span>` : '';
+            const noteBtnClick = isWaitlist
+                ? `PortalGroupDetail.openWaitlistNoteHistoryByIndex(${idx})`
+                : `PortalGroupDetail.openNoteHistoryByIndex(${idx})`;
             html += `
-                <div class="gd-member-item">
+                <div class="gd-member-item ${isWaitlist ? 'is-waitlist' : ''}">
+                    ${orderTag}
                     <div class="gd-member-avatar-wrap" data-member-id="${safeId.toLowerCase()}" onclick="PortalProfile.openByUserId('${safeId}', this)" title="點擊查看數位名片">
                         <img src="${safePic}" alt="${escapeHtml(m.name)}" loading="lazy" onerror="this.src='https://imgur.com/786FxAA.jpg'">
                         ${isMe ? '<span class="my-self-badge">我</span>' : ''}
                     </div>
                     <div class="gd-member-name">${escapeHtml(m.name)}</div>
-                    ${noteText ? `<button type="button" class="gd-member-note" onclick="PortalGroupDetail.openNoteHistoryByIndex(${idx})">${escapeHtml(noteText)}</button>` : ''}
+                    ${noteText ? `<button type="button" class="gd-member-note" onclick="${noteBtnClick}">${escapeHtml(noteText)}</button>` : ''}
                 </div>
             `;
         });
-        container.innerHTML = html;
+        return html;
+    }
+
+    function renderJoinedMembers() {
+        if (!currentGroup) return;
+        const container = document.getElementById('gdJoinedList');
+        const list = Array.isArray(currentGroup.joinedList) ? currentGroup.joinedList : [];
+        const waitlist = Array.isArray(currentGroup.waitlist) ? currentGroup.waitlist : [];
+        const maxL = parseInt(currentGroup.maxLimit, 10) || 99;
+        document.getElementById('gdCountDisplay').textContent = `${list.length} / ${maxL === 99 ? '不限' : maxL}`;
+
+        if (list.length === 0) {
+            container.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--p-muted);padding:20px 0;">尚無人報名</div>';
+        } else {
+            container.innerHTML = buildMemberGridHtml(list, false);
+        }
+
+        const waitSection = document.getElementById('gdWaitlistSection');
+        const waitContainer = document.getElementById('gdWaitlistList');
+        const waitCountEl = document.getElementById('gdWaitlistCountDisplay');
+        if (waitSection && waitContainer) {
+            if (waitlist.length > 0) {
+                waitSection.style.display = 'block';
+                if (waitCountEl) waitCountEl.textContent = `${waitlist.length} 人`;
+                waitContainer.innerHTML = buildMemberGridHtml(waitlist, true);
+            } else {
+                waitSection.style.display = 'none';
+                waitContainer.innerHTML = '';
+            }
+        }
     }
 
     function refreshUserActions() {
@@ -255,7 +278,9 @@ window.PortalGroupDetail = (function() {
         if (hostBox) hostBox.style.display = isHost ? 'flex' : 'none';
 
         const joined = Array.isArray(currentGroup.joinedList) ? currentGroup.joinedList : [];
+        const waitlist = Array.isArray(currentGroup.waitlist) ? currentGroup.waitlist : [];
         const existing = joined.find(m => String(m.id).toLowerCase() === uidLower);
+        const waitIdx = waitlist.findIndex(m => String(m.id).toLowerCase() === uidLower);
         const maxL = parseInt(currentGroup.maxLimit, 10) || 99;
         const isFull = maxL !== 99 && joined.length >= maxL;
 
@@ -265,10 +290,18 @@ window.PortalGroupDetail = (function() {
                 <button type="button" class="btn btn--primary" onclick="PortalGroupDetail.handleUpdateNote()">✏️ 更新備註</button>
                 <button type="button" class="btn btn--danger" onclick="PortalGroupDetail.handleLeaveGroup()">🚪 退出揪團</button>
             `;
+        } else if (waitIdx !== -1) {
+            const waitMember = waitlist[waitIdx];
+            if (noteInput) noteInput.value = waitMember.note || '';
+            btnRow.innerHTML = `
+                <div class="gd-waitlist-status-banner" style="width:100%;">⏳ 您目前在候補名單中（順位第 ${waitIdx + 1} 位），釋出名額將自動遞補通知</div>
+                <button type="button" class="btn btn--primary" onclick="PortalGroupDetail.handleUpdateNote()">✏️ 更新備註</button>
+                <button type="button" class="btn btn--danger" onclick="PortalGroupDetail.handleLeaveGroup()">🚪 退出揪團</button>
+            `;
         } else {
             if (noteInput) noteInput.value = '';
             if (isFull) {
-                btnRow.innerHTML = `<button type="button" class="btn btn--secondary" disabled>❌ 人數已額滿 (${joined.length}/${maxL})</button>`;
+                btnRow.innerHTML = `<button type="button" class="btn btn--secondary" onclick="PortalGroupDetail.handleJoinGroup()">⏳ 已額滿 (${joined.length}/${maxL}) · 登記候補</button>`;
             } else {
                 btnRow.innerHTML = `<button type="button" class="btn btn--primary" onclick="PortalGroupDetail.handleJoinGroup()">🙋‍♂️ 立即報名</button>`;
             }
@@ -279,23 +312,32 @@ window.PortalGroupDetail = (function() {
         if (!currentGroup || !Store.currentUserId) return;
         const seqId = currentGroup.seqId;
         const noteText = (document.getElementById('gdActionNote').value || '').trim();
+        const joined = Array.isArray(currentGroup.joinedList) ? currentGroup.joinedList : [];
+        const maxL = parseInt(currentGroup.maxLimit, 10) || 99;
+        const isFull = maxL !== 99 && joined.length >= maxL;
 
         Swal.fire({
-            title: '確認報名',
-            text: noteText ? `備註：${noteText}` : '確定要參加這個揪團活動嗎？',
+            title: isFull ? '確認登記候補' : '確認報名',
+            text: isFull
+                ? (noteText ? `目前人數已滿，將加入候補名單（備註：${noteText}）` : '目前人數已滿，確定要加入候補名單嗎？有空缺將依序自動遞補並標註通知。')
+                : (noteText ? `備註：${noteText}` : '確定要參加這個揪團活動嗎？'),
             icon: 'question',
             showCancelButton: true,
             confirmButtonColor: '#3a6e59',
             cancelButtonColor: '#6b7280',
-            confirmButtonText: '確定參加',
+            confirmButtonText: isFull ? '確定登記候補' : '確定參加',
             cancelButtonText: '取消'
         }).then(result => {
             if (!result.isConfirmed) return;
-            Swal.fire({ title: '報名處理中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            Swal.fire({ title: isFull ? '登記候補中...' : '報名處理中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
             callGasApi('group', 'joinGroup', { seqId: seqId, userId: Store.currentUserId, noteText: noteText }, res => {
                 if (res && res.success) {
-                    Swal.fire('報名成功！', '您已成功加入本活動名單 🎉', 'success');
+                    if (res.waitlisted) {
+                        Swal.fire('已加入候補名單！', `您的候補順位為第 ${res.waitlistPos || 1} 位 ⏳`, 'success');
+                    } else {
+                        Swal.fire('報名成功！', '您已成功加入本活動名單 🎉', 'success');
+                    }
                     fetchSingleGroup(seqId, true);
                     window.PortalJukebox.refresh(true, seqId);
                 } else {
@@ -325,10 +367,13 @@ window.PortalGroupDetail = (function() {
     function handleLeaveGroup() {
         if (!currentGroup || !Store.currentUserId) return;
         const seqId = currentGroup.seqId;
+        const uidLower = Store.currentUserId.toLowerCase();
+        const waitlist = Array.isArray(currentGroup.waitlist) ? currentGroup.waitlist : [];
+        const isWaitlisted = waitlist.some(m => String(m.id).toLowerCase() === uidLower);
 
         Swal.fire({
-            title: '確定要退出揪團嗎？',
-            text: '退出後您的名額將釋出給其他夥伴',
+            title: isWaitlisted ? '確定要退出候補嗎？' : '確定要退出揪團嗎？',
+            text: isWaitlisted ? '退出後將取消您的候補順位' : '退出後您的名額將釋出（若有候補名單將自動依序遞補）',
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#c53030',
@@ -341,7 +386,7 @@ window.PortalGroupDetail = (function() {
 
             callGasApi('group', 'leaveGroup', { seqId: seqId, userId: Store.currentUserId }, res => {
                 if (res && res.success) {
-                    Swal.fire('已退出', '您已退出本揪團活動', 'info');
+                    Swal.fire('已退出', res.leftType === 'waitlist' ? '您已退出本活動候補名單' : '您已退出本揪團活動', 'info');
                     fetchSingleGroup(seqId, true);
                     window.PortalJukebox.refresh(true, seqId);
                 } else {
@@ -489,9 +534,8 @@ window.PortalGroupDetail = (function() {
         openExternalUrl(event, btn.dataset.url || btn.getAttribute('href'));
     }
 
-    function openNoteHistoryByIndex(idx) {
-        if (!currentGroup || !Array.isArray(currentGroup.joinedList) || !currentGroup.joinedList[idx]) return;
-        const m = currentGroup.joinedList[idx];
+    function showMemberNoteHistory(m) {
+        if (!m) return;
         document.getElementById('noteHistoryTitle').textContent = `${m.name} 的備註歷史`;
         const hist = Array.isArray(currentGroup.joinedNotesHistory)
             ? currentGroup.joinedNotesHistory.filter(it => it && String(it.userId).toLowerCase() === String(m.id).toLowerCase()).reverse()
@@ -511,6 +555,16 @@ window.PortalGroupDetail = (function() {
                 : '<div style="text-align:center;color:var(--p-muted);padding:20px 0;">尚無備註修訂紀錄</div>';
         }
         document.getElementById('noteHistoryOverlay').classList.add('is-open');
+    }
+
+    function openNoteHistoryByIndex(idx) {
+        if (!currentGroup || !Array.isArray(currentGroup.joinedList) || !currentGroup.joinedList[idx]) return;
+        showMemberNoteHistory(currentGroup.joinedList[idx]);
+    }
+
+    function openWaitlistNoteHistoryByIndex(idx) {
+        if (!currentGroup || !Array.isArray(currentGroup.waitlist) || !currentGroup.waitlist[idx]) return;
+        showMemberNoteHistory(currentGroup.waitlist[idx]);
     }
 
     function closeNoteHistory() {
@@ -562,6 +616,7 @@ window.PortalGroupDetail = (function() {
         handleGoogleCalClick,
         handleIcalClick,
         openNoteHistoryByIndex,
+        openWaitlistNoteHistoryByIndex,
         closeNoteHistory,
         openTagModal,
         closeTagModal,
