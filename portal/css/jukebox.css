@@ -1,0 +1,457 @@
+/* ============================================================================
+   Horizontal 3D Rotary Jukebox Carousel (揪團點唱機核心視覺與動態)
+   taste-skill Editorial Sage Craftsmanship
+   ============================================================================ */
+
+.jukebox-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.jukebox-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.84rem;
+  color: var(--p-muted);
+}
+
+.jukebox-hint .mono {
+  color: var(--p-action);
+  font-weight: 600;
+}
+
+/* 骨架屏 */
+.jukebox-loading-box {
+  background: var(--p-surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 28px 20px;
+}
+
+.jukebox-skeleton-stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  overflow: hidden;
+}
+
+.sk-card {
+  border-radius: var(--r-lg);
+  border: 1px solid var(--line);
+  background: var(--p-surface-tint);
+  padding: 24px;
+}
+
+.sk-card--center {
+  width: 100%;
+  max-width: 400px;
+  min-height: 340px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sk-card--side {
+  display: none;
+  width: 260px;
+  height: 300px;
+  opacity: 0.55;
+}
+
+@media (min-width: 900px) {
+  .sk-card--side {
+    display: block;
+  }
+}
+
+.sk-line {
+  height: 14px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #e2ebe7 25%, #eef4f1 50%, #e2ebe7 75%);
+  background-size: 200% 100%;
+  animation: skShimmer 1.4s infinite;
+}
+
+.sk-w40 { width: 40%; }
+.sk-w60 { width: 60%; }
+.sk-w80 { width: 85%; }
+.sk-lg { height: 24px; }
+.sk-block { height: 110px; }
+.sk-btn { height: 44px; margin-top: auto; }
+
+@keyframes skShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.loading-caption {
+  text-align: center;
+  margin: 16px 0 0;
+  font-size: 0.9rem;
+  color: var(--p-muted);
+}
+
+/* 3D 點唱機舞台容器 */
+.jukebox-shell {
+  position: relative;
+}
+
+.jukebox-stage {
+  position: relative;
+  height: 452px;
+  width: 100%;
+  perspective: 1300px;
+  transform-style: preserve-3d;
+  overflow: hidden;
+  touch-action: pan-y;
+  user-select: none;
+  cursor: grab;
+  border-radius: var(--r-lg);
+  outline: none;
+}
+
+.jukebox-stage:active {
+  cursor: grabbing;
+}
+
+@media (min-width: 768px) {
+  .jukebox-stage {
+    height: 472px;
+  }
+}
+
+/* 建築感同心圓弧軌道線 */
+.jukebox-arc-bg {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 190px;
+  color: var(--line-strong);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.jukebox-track {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+}
+
+/* 單張點唱機揪團卡片 */
+.jukebox-card {
+  position: absolute;
+  left: 50%;
+  top: 14px;
+  width: min(410px, calc(100vw - 44px));
+  height: 416px;
+  margin-left: calc(min(410px, calc(100vw - 44px)) / -2);
+  background: var(--p-surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 22px 22px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  will-change: transform, opacity;
+  transition: border-color var(--m-out) var(--m-ease), box-shadow var(--m-out) var(--m-ease);
+}
+
+@media (min-width: 768px) {
+  .jukebox-card {
+    top: 18px;
+    width: 420px;
+    height: 432px;
+    margin-left: -210px;
+    padding: 24px 26px 22px;
+  }
+}
+
+.jukebox-card.is-center {
+  border-color: color-mix(in oklab, var(--p-accent) 45%, transparent);
+  box-shadow: 0 20px 42px -24px rgba(22, 34, 29, 0.22),
+              inset 0 3px 0 0 var(--p-accent);
+  cursor: pointer;
+}
+
+.jukebox-card:not(.is-center) {
+  cursor: pointer;
+}
+
+/* 卡片內部三段結構 (Two-level clean layout) */
+.jb-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.jb-track-id {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--p-muted);
+}
+
+.jb-status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: var(--p-accent-soft);
+  color: var(--p-action);
+  border: 1px solid color-mix(in oklab, var(--p-accent) 24%, transparent);
+  white-space: nowrap;
+}
+
+.jb-status-badge.is-full {
+  background: var(--p-danger-soft);
+  color: var(--p-danger);
+  border-color: color-mix(in oklab, var(--p-danger) 24%, transparent);
+}
+
+.jb-status-badge.is-soon {
+  background: var(--p-amber-soft);
+  color: var(--p-amber);
+  border-color: color-mix(in oklab, var(--p-amber) 24%, transparent);
+}
+
+.jb-title {
+  margin: 0 0 10px;
+  font-size: 1.24rem;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+  color: var(--p-ink);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.jb-meta-panel {
+  background: var(--p-surface-tint);
+  border-radius: var(--r-md);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.jb-meta-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.86rem;
+  color: var(--p-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.jb-meta-line .mono {
+  font-size: 0.82rem;
+}
+
+.jb-excerpt {
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--p-muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.jb-footer {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.jb-social-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.jb-avatars-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.jb-avatar-stack {
+  display: flex;
+  align-items: center;
+}
+
+.jb-avatar-stack img {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--p-surface);
+  margin-left: -8px;
+  background: var(--p-surface-tint);
+}
+
+.jb-avatar-stack img:first-child {
+  margin-left: 0;
+}
+
+.jb-host-label {
+  font-size: 0.82rem;
+  color: var(--p-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.jb-count-wrap {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.jb-count-text {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--p-ink);
+}
+
+.jb-progress-bar {
+  width: 84px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--line);
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.jb-progress-fill {
+  height: 100%;
+  background: var(--p-accent);
+  border-radius: 999px;
+}
+
+.jb-progress-fill.is-full {
+  background: var(--p-danger);
+}
+
+.jb-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+/* 下方點唱機選曲轉盤條 */
+.jukebox-deck {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+  padding: 10px 12px;
+  background: var(--p-surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+}
+
+.deck-step-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line-strong);
+  background: var(--p-surface);
+  color: var(--p-ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color var(--m-out) var(--m-ease), transform var(--m-press) var(--m-ease);
+}
+
+.deck-step-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .deck-step-btn:not(:disabled):hover {
+    background: var(--p-surface-tint);
+    border-color: var(--p-action);
+  }
+}
+
+.deck-step-btn:not(:disabled):active {
+  transform: scale(0.95);
+}
+
+.deck-rail {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 2px;
+}
+
+.deck-rail::-webkit-scrollbar {
+  display: none;
+}
+
+.dial-pill {
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line);
+  background: var(--p-surface-tint);
+  color: var(--p-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.84rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  max-width: 190px;
+  transition: background-color var(--m-out) var(--m-ease), border-color var(--m-out) var(--m-ease), color var(--m-out) var(--m-ease);
+}
+
+.dial-pill-num {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.dial-pill-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dial-pill.is-active {
+  background: var(--p-action);
+  border-color: var(--p-action);
+  color: #ffffff;
+  font-weight: 600;
+}

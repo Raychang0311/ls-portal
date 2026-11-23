@@ -1,0 +1,544 @@
+/**
+ * L>S Portal — 揪團完整詳情抽屜、Leaflet 地圖、報名/改備註/退出、主揪編輯與結束揪團
+ */
+window.PortalGroupDetail = (function() {
+    const { Store, callGasApi, escapeHtml, replaceLinks, openExternalUrl } = window.PortalApi;
+
+    let currentGroup = null;
+    let targetMapUrl = '';
+    let leafletMap = null;
+
+    function open(seqId) {
+        if (!seqId) return;
+        const overlay = document.getElementById('groupDetailOverlay');
+        if (!overlay) return;
+
+        const cached = Store.groups.find(g => String(g.seqId) === String(seqId));
+        if (cached) {
+            renderGroup(cached);
+            overlay.classList.add('is-open');
+            document.body.style.overflow = 'hidden';
+            setTimeout(() => { if (leafletMap) leafletMap.invalidateSize(); }, 220);
+            // 背景補拉單筆最新狀態（確保同時有人報名或更新備註時保持最新）
+            fetchSingleGroup(seqId, true);
+            return;
+        }
+
+        Swal.fire({ title: '讀取活動資訊中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        fetchSingleGroup(seqId, false);
+    }
+
+    function fetchSingleGroup(seqId, silent) {
+        callGasApi('group', 'getGroup', { seqId: seqId }, res => {
+            if (!silent) Swal.close();
+            if (!res || res.success === false) {
+                if (!silent) Swal.fire('提示', (res && res.error) || '找不到該揪團資訊或已結束', 'info');
+                return;
+            }
+
+            const normalized = Object.assign({ seqId: String(seqId) }, res);
+            const idx = Store.groups.findIndex(g => String(g.seqId) === String(seqId));
+            if (idx !== -1) {
+                Store.groups[idx] = Object.assign({}, Store.groups[idx], normalized);
+            }
+
+            if (!Store.membersLoaded && Array.isArray(res.members) && res.members.length > 0) {
+                Store.members = res.members;
+            }
+            if (res.titleConfig && !Store.titleConfig) {
+                Store.titleConfig = res.titleConfig;
+            }
+
+            if (!silent || (currentGroup && String(currentGroup.seqId) === String(seqId))) {
+                renderGroup(normalized);
+                const overlay = document.getElementById('groupDetailOverlay');
+                if (overlay && !overlay.classList.contains('is-open')) {
+                    overlay.classList.add('is-open');
+                    document.body.style.overflow = 'hidden';
+                }
+                setTimeout(() => { if (leafletMap) leafletMap.invalidateSize(); }, 220);
+            }
+        }, err => {
+            if (!silent) {
+                Swal.close();
+                Swal.fire('錯誤', '載入揪團詳情失敗：' + err, 'error');
+            }
+        });
+    }
+
+    function close() {
+        const overlay = document.getElementById('groupDetailOverlay');
+        if (!overlay) return;
+        overlay.classList.remove('is-open');
+        document.body.style.overflow = '';
+        if (leafletMap) {
+            leafletMap.remove();
+            leafletMap = null;
+        }
+        currentGroup = null;
+    }
+
+    function renderGroup(g) {
+        currentGroup = g;
+
+        document.getElementById('gdSeqBadge').textContent = '#' + (g.seqId || '');
+        document.getElementById('gdDate').textContent = g.date || '';
+        document.getElementById('gdTitle').textContent = g.title || '揪團活動';
+        document.getElementById('gdContent').innerHTML = replaceLinks(g.content || '');
+
+        const hostRow = document.getElementById('gdHostRow');
+        const hostMember = window.PortalApi.findMemberById(g.hostId);
+        const hostPic = (hostMember && hostMember.pic) || g.hostPic || 'https://imgur.com/786FxAA.jpg';
+        const hostName = (hostMember && hostMember.name) || g.hostName || '主揪';
+        if (hostRow) {
+            hostRow.innerHTML = `<img src="${escapeHtml(hostPic)}" alt="${escapeHtml(hostName)}" onerror="this.src='https://imgur.com/786FxAA.jpg'"><span>主揪：<strong>${escapeHtml(hostName)}</strong></span>`;
+            hostRow.onclick = () => { if (g.hostId) window.PortalProfile.openByUserId(g.hostId, hostRow); };
+        }
+
+        // 狀態徽章
+        const maxL = parseInt(g.maxLimit, 10) || 99;
+        const joined = Array.isArray(g.joinedList) ? g.joinedList : [];
+        const isFull = maxL !== 99 && joined.length >= maxL;
+        const statusEl = document.getElementById('gdStatusBadge');
+        if (statusEl) {
+            statusEl.textContent = isFull ? '已額滿' : '開放報名';
+            statusEl.className = 'status-pill ' + (isFull ? 'is-early' : 'is-done');
+        }
+
+        // 地點與 Leaflet 地圖
+        const locCard = document.getElementById('gdLocationCard');
+        const locName = g.locationName || '';
+        const locUrl = g.locationUrl || '';
+        const locAddr = g.locationAddress || '';
+        if (locName || locAddr || locUrl) {
+            const displayTitle = locName || locAddr || '活動地點';
+            document.getElementById('gdLocName').textContent = displayTitle;
+            const addrEl = document.getElementById('gdLocAddr');
+            if (locAddr && locAddr !== displayTitle) {
+                addrEl.textContent = locAddr;
+                addrEl.style.display = 'block';
+            } else {
+                addrEl.textContent = '';
+                addrEl.style.display = 'none';
+            }
+            targetMapUrl = g.locationResolvedUrl || locUrl || ('https://maps.google.com/?q=' + encodeURIComponent(locAddr || displayTitle));
+            document.getElementById('gdLocMapLink').href = targetMapUrl;
+            locCard.style.display = 'block';
+
+            if (g.locationLat && g.locationLng) {
+                renderMapPreview(g.locationLat, g.locationLng);
+            } else {
+                initLocationMap(locName, locUrl, locAddr);
+            }
+        } else {
+            locCard.style.display = 'none';
+        }
+
+        // 雙日曆按鈕
+        const gcalBtn = document.getElementById('gdGoogleCalBtn');
+        if (g.googleCalendarUrl) {
+            gcalBtn.href = g.googleCalendarUrl;
+            gcalBtn.dataset.url = g.googleCalendarUrl;
+            gcalBtn.classList.remove('disabled');
+        } else {
+            gcalBtn.href = '#';
+            gcalBtn.dataset.url = '';
+            gcalBtn.classList.add('disabled');
+        }
+
+        const icalBtn = document.getElementById('gdIcalBtn');
+        if (g.eventUrl) {
+            icalBtn.href = g.eventUrl;
+            icalBtn.dataset.url = g.eventUrl;
+            icalBtn.classList.remove('disabled');
+        } else {
+            icalBtn.href = '#';
+            icalBtn.dataset.url = '';
+            icalBtn.classList.add('disabled');
+        }
+
+        renderJoinedMembers();
+        refreshUserActions();
+
+        const scrollBody = document.getElementById('gdBodyScroll');
+        if (scrollBody) scrollBody.scrollTop = 0;
+    }
+
+    function renderJoinedMembers() {
+        if (!currentGroup) return;
+        const container = document.getElementById('gdJoinedList');
+        const list = Array.isArray(currentGroup.joinedList) ? currentGroup.joinedList : [];
+        const maxL = parseInt(currentGroup.maxLimit, 10) || 99;
+        document.getElementById('gdCountDisplay').textContent = `${list.length} / ${maxL === 99 ? '不限' : maxL}`;
+
+        if (list.length === 0) {
+            container.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--p-muted);padding:20px 0;">尚無人報名</div>';
+            return;
+        }
+
+        const uidLower = Store.currentUserId ? Store.currentUserId.toLowerCase() : '';
+        let html = '';
+        list.forEach((m, idx) => {
+            const isMe = uidLower && m.id && String(m.id).toLowerCase() === uidLower;
+            const noteText = (m.note || '').trim();
+            const safePic = escapeHtml(m.pic || 'https://imgur.com/786FxAA.jpg');
+            const safeId = escapeHtml(m.id || '');
+            html += `
+                <div class="gd-member-item">
+                    <div class="gd-member-avatar-wrap" data-member-id="${safeId.toLowerCase()}" onclick="PortalProfile.openByUserId('${safeId}', this)" title="點擊查看數位名片">
+                        <img src="${safePic}" alt="${escapeHtml(m.name)}" loading="lazy" onerror="this.src='https://imgur.com/786FxAA.jpg'">
+                        ${isMe ? '<span class="my-self-badge">我</span>' : ''}
+                    </div>
+                    <div class="gd-member-name">${escapeHtml(m.name)}</div>
+                    ${noteText ? `<button type="button" class="gd-member-note" onclick="PortalGroupDetail.openNoteHistoryByIndex(${idx})">${escapeHtml(noteText)}</button>` : ''}
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+    }
+
+    function refreshUserActions() {
+        if (!currentGroup) return;
+        const authTag = document.getElementById('gdAuthTag');
+        const guestBox = document.getElementById('gdGuestNotice');
+        const memberArea = document.getElementById('gdMemberActions');
+        const hostBox = document.getElementById('gdHostControls');
+        const btnRow = document.getElementById('gdActionBtnRow');
+        const noteInput = document.getElementById('gdActionNote');
+
+        if (!Store.currentUserId) {
+            if (authTag) { authTag.textContent = '訪客模式'; authTag.classList.remove('is-ok'); }
+            if (guestBox) guestBox.style.display = 'flex';
+            if (memberArea) memberArea.style.display = 'none';
+            return;
+        }
+
+        if (authTag) {
+            authTag.textContent = '👤 ' + (Store.currentDisplayName || '已登入');
+            authTag.classList.add('is-ok');
+        }
+        if (guestBox) guestBox.style.display = 'none';
+        if (memberArea) memberArea.style.display = 'block';
+
+        const uidLower = Store.currentUserId.toLowerCase();
+        const isHost = Boolean(currentGroup.hostId && String(currentGroup.hostId).trim().toLowerCase() === uidLower);
+        if (hostBox) hostBox.style.display = isHost ? 'flex' : 'none';
+
+        const joined = Array.isArray(currentGroup.joinedList) ? currentGroup.joinedList : [];
+        const existing = joined.find(m => String(m.id).toLowerCase() === uidLower);
+        const maxL = parseInt(currentGroup.maxLimit, 10) || 99;
+        const isFull = maxL !== 99 && joined.length >= maxL;
+
+        if (existing) {
+            if (noteInput) noteInput.value = existing.note || '';
+            btnRow.innerHTML = `
+                <button type="button" class="btn btn--primary" onclick="PortalGroupDetail.handleUpdateNote()">✏️ 更新備註</button>
+                <button type="button" class="btn btn--danger" onclick="PortalGroupDetail.handleLeaveGroup()">🚪 退出揪團</button>
+            `;
+        } else {
+            if (noteInput) noteInput.value = '';
+            if (isFull) {
+                btnRow.innerHTML = `<button type="button" class="btn btn--secondary" disabled>❌ 人數已額滿 (${joined.length}/${maxL})</button>`;
+            } else {
+                btnRow.innerHTML = `<button type="button" class="btn btn--primary" onclick="PortalGroupDetail.handleJoinGroup()">🙋‍♂️ 立即報名</button>`;
+            }
+        }
+    }
+
+    function handleJoinGroup() {
+        if (!currentGroup || !Store.currentUserId) return;
+        const seqId = currentGroup.seqId;
+        const noteText = (document.getElementById('gdActionNote').value || '').trim();
+
+        Swal.fire({
+            title: '確認報名',
+            text: noteText ? `備註：${noteText}` : '確定要參加這個揪團活動嗎？',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#3a6e59',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: '確定參加',
+            cancelButtonText: '取消'
+        }).then(result => {
+            if (!result.isConfirmed) return;
+            Swal.fire({ title: '報名處理中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+            callGasApi('group', 'joinGroup', { seqId: seqId, userId: Store.currentUserId, noteText: noteText }, res => {
+                if (res && res.success) {
+                    Swal.fire('報名成功！', '您已成功加入本活動名單 🎉', 'success');
+                    fetchSingleGroup(seqId, true);
+                    window.PortalJukebox.refresh(true, seqId);
+                } else {
+                    Swal.fire('報名失敗', (res && res.error) || '發生未知錯誤', 'error');
+                }
+            }, err => Swal.fire('系統錯誤', '報名失敗：' + err, 'error'));
+        });
+    }
+
+    function handleUpdateNote() {
+        if (!currentGroup || !Store.currentUserId) return;
+        const seqId = currentGroup.seqId;
+        const noteText = (document.getElementById('gdActionNote').value || '').trim();
+
+        Swal.fire({ title: '更新備註中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        callGasApi('group', 'updateNote', { seqId: seqId, userId: Store.currentUserId, noteText: noteText }, res => {
+            if (res && res.success) {
+                Swal.fire('更新成功！', '您的備註已儲存', 'success');
+                fetchSingleGroup(seqId, true);
+                window.PortalJukebox.refresh(true, seqId);
+            } else {
+                Swal.fire('更新失敗', (res && res.error) || '發生未知錯誤', 'error');
+            }
+        }, err => Swal.fire('系統錯誤', '更新備註失敗：' + err, 'error'));
+    }
+
+    function handleLeaveGroup() {
+        if (!currentGroup || !Store.currentUserId) return;
+        const seqId = currentGroup.seqId;
+
+        Swal.fire({
+            title: '確定要退出揪團嗎？',
+            text: '退出後您的名額將釋出給其他夥伴',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#c53030',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: '確認退出',
+            cancelButtonText: '取消'
+        }).then(result => {
+            if (!result.isConfirmed) return;
+            Swal.fire({ title: '退出處理中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+            callGasApi('group', 'leaveGroup', { seqId: seqId, userId: Store.currentUserId }, res => {
+                if (res && res.success) {
+                    Swal.fire('已退出', '您已退出本揪團活動', 'info');
+                    fetchSingleGroup(seqId, true);
+                    window.PortalJukebox.refresh(true, seqId);
+                } else {
+                    Swal.fire('退出失敗', (res && res.error) || '發生未知錯誤', 'error');
+                }
+            }, err => Swal.fire('系統錯誤', '退出失敗：' + err, 'error'));
+        });
+    }
+
+    function handleEditGroup() {
+        if (!currentGroup) return;
+        const seqId = currentGroup.seqId;
+        close();
+        window.PortalGroupForm.openEdit(seqId);
+    }
+
+    function handleCloseGroup() {
+        if (!currentGroup || !Store.currentUserId) return;
+        const seqId = currentGroup.seqId;
+        const title = currentGroup.title || '此揪團';
+
+        Swal.fire({
+            icon: 'warning',
+            title: `確定要結束「${escapeHtml(title)}」嗎？`,
+            html: '<div style="text-align:left;font-size:0.92rem;line-height:1.6;color:#52635c;">結束揪團後將會：<br>1. 刪除活動的 <code>.ics</code> 日曆檔<br>2. 將本活動歸檔至「揪團大事記」<br>3. 從進行中揪團清單移除（此動作無法復原）</div>',
+            showCancelButton: true,
+            reverseButtons: true,
+            confirmButtonColor: '#c53030',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: '確認結束揪團',
+            cancelButtonText: '取消'
+        }).then(result => {
+            if (!result.isConfirmed) return;
+            Swal.fire({ title: '正在歸檔並結束揪團...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+            callGasApi('group', 'closeGroup', { seqId: seqId, userId: Store.currentUserId }, res => {
+                if (res && res.success) {
+                    // 清除大事記快取，使切換至「揪團大事記」時可即時看到剛歸檔的活動
+                    Store.groupHistoryLoaded = false;
+                    Store.groupHistory = [];
+                    Store.groups = Store.groups.filter(g => String(g.seqId) !== String(seqId));
+                    close();
+                    window.PortalJukebox.refresh(true);
+                    Swal.fire('已結束揪團', `活動已歸檔為「${escapeHtml(res.endType || '已結束')}」`, 'success');
+                } else {
+                    Swal.fire('結束失敗', (res && res.error) || '發生未知錯誤', 'error');
+                }
+            }, err => Swal.fire('系統錯誤', '結束揪團失敗：' + err, 'error'));
+        });
+    }
+
+    function initLocationMap(name, url, address) {
+        if (!window.L) return;
+        const coordMatch = (url || '').match(/@(-?\d+\.\d+),(-?\d+\.\d+)/) ||
+            (url || '').match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/) ||
+            (url || '').match(/[?&](?:query|q|ll)=(-?\d+\.\d+),(-?\d+\.\d+)/) ||
+            (url || '').match(/center=(-?\d+\.\d+)(?:%2C|,)(-?\d+\.\d+)/);
+
+        if (coordMatch) {
+            renderMapPreview(parseFloat(coordMatch[1]), parseFloat(coordMatch[2]));
+            return;
+        }
+
+        if (url || address || name) {
+            callGasApi('group', 'resolveLocation', { url: url, name: name, address: address }, coords => {
+                if (coords && coords.lat && coords.lng) {
+                    if (coords.resolvedUrl) {
+                        targetMapUrl = coords.resolvedUrl;
+                        const linkEl = document.getElementById('gdLocMapLink');
+                        if (linkEl) linkEl.href = targetMapUrl;
+                    }
+                    renderMapPreview(coords.lat, coords.lng);
+                } else {
+                    fallbackGeocode(name, address);
+                }
+            }, () => fallbackGeocode(name, address));
+        } else {
+            fallbackGeocode(name, address);
+        }
+    }
+
+    function fallbackGeocode(name, address) {
+        const cleanName = name ? name.replace(/（[^）]*）|\([^)]*\)|\[[^\]]*\]/g, '').trim() : '';
+        const queries = [address, cleanName, name].map(q => q ? String(q).trim() : '').filter((q, i, arr) => q && arr.indexOf(q) === i);
+        if (!queries.length) { renderMapPreview(25.0330, 121.5654); return; }
+
+        const tryQ = idx => {
+            if (idx >= queries.length) { renderMapPreview(25.0330, 121.5654); return; }
+            fetch('https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(queries[idx]) + '&countrycodes=tw&format=json&limit=1')
+                .then(r => r.json())
+                .then(list => {
+                    if (Array.isArray(list) && list.length > 0) {
+                        renderMapPreview(parseFloat(list[0].lat), parseFloat(list[0].lon));
+                    } else {
+                        tryQ(idx + 1);
+                    }
+                })
+                .catch(() => tryQ(idx + 1));
+        };
+        tryQ(0);
+    }
+
+    function renderMapPreview(lat, lng) {
+        try {
+            const mapEl = document.getElementById('gdMapView');
+            if (!mapEl || !window.L) return;
+            if (leafletMap) { leafletMap.remove(); leafletMap = null; }
+
+            leafletMap = L.map('gdMapView', {
+                center: [lat, lng],
+                zoom: 16,
+                zoomControl: false,
+                attributionControl: false,
+                dragging: false,
+                touchZoom: false,
+                scrollWheelZoom: false,
+                doubleClickZoom: false,
+                boxZoom: false,
+                keyboard: false
+            });
+            L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(leafletMap);
+            const pin = L.divIcon({
+                className: 'custom-map-marker',
+                html: '<div style="font-size:26px;line-height:1;transform:translate(-50%,-100%);">📍</div>',
+                iconSize: [0, 0]
+            });
+            L.marker([lat, lng], { icon: pin }).addTo(leafletMap);
+            setTimeout(() => { if (leafletMap) leafletMap.invalidateSize(); }, 250);
+        } catch (e) {}
+    }
+
+    function openLocationMap() {
+        if (targetMapUrl) openExternalUrl(null, targetMapUrl);
+    }
+
+    function handleGoogleCalClick(event) {
+        const btn = document.getElementById('gdGoogleCalBtn');
+        if (!btn || btn.classList.contains('disabled')) { event.preventDefault(); return; }
+        openExternalUrl(event, btn.dataset.url || btn.getAttribute('href'));
+    }
+
+    function handleIcalClick(event) {
+        const btn = document.getElementById('gdIcalBtn');
+        if (!btn || btn.classList.contains('disabled')) { event.preventDefault(); return; }
+        openExternalUrl(event, btn.dataset.url || btn.getAttribute('href'));
+    }
+
+    function openNoteHistoryByIndex(idx) {
+        if (!currentGroup || !Array.isArray(currentGroup.joinedList) || !currentGroup.joinedList[idx]) return;
+        const m = currentGroup.joinedList[idx];
+        document.getElementById('noteHistoryTitle').textContent = `${m.name} 的備註歷史`;
+        const hist = Array.isArray(currentGroup.joinedNotesHistory)
+            ? currentGroup.joinedNotesHistory.filter(it => it && String(it.userId).toLowerCase() === String(m.id).toLowerCase()).reverse()
+            : [];
+
+        const listEl = document.getElementById('noteHistoryList');
+        if (hist.length > 0) {
+            listEl.innerHTML = hist.map((item, i) => `
+                <div class="history-item ${i === 0 ? 'latest' : ''}">
+                    <div>${escapeHtml(item.note || '無內容')}</div>
+                    <div class="history-time"><span>${escapeHtml(item.time || '')}</span>${i === 0 ? '<span>最新</span>' : ''}</div>
+                </div>
+            `).join('');
+        } else {
+            listEl.innerHTML = m.note
+                ? `<div class="history-item latest"><div>${escapeHtml(m.note)}</div><div class="history-time"><span>${escapeHtml(m.noteTime || '')}</span><span>最新</span></div></div>`
+                : '<div style="text-align:center;color:var(--p-muted);padding:20px 0;">尚無備註修訂紀錄</div>';
+        }
+        document.getElementById('noteHistoryOverlay').classList.add('is-open');
+    }
+
+    function closeNoteHistory() {
+        document.getElementById('noteHistoryOverlay').classList.remove('is-open');
+    }
+
+    function openTagModal() {
+        if (!currentGroup || !Array.isArray(currentGroup.joinedList) || currentGroup.joinedList.length === 0) {
+            Swal.fire('提示', '目前沒有參加者可標記', 'info');
+            return;
+        }
+        document.getElementById('tagTextarea').value = currentGroup.joinedList.map(m => `@${m.name}`).join(' ');
+        document.getElementById('tagCopyBtn').textContent = '複製全員';
+        document.getElementById('tagModalOverlay').classList.add('is-open');
+    }
+
+    function closeTagModal() {
+        document.getElementById('tagModalOverlay').classList.remove('is-open');
+    }
+
+    function copyTagText() {
+        const ta = document.getElementById('tagTextarea');
+        ta.select();
+        ta.setSelectionRange(0, 99999);
+        const done = () => {
+            const btn = document.getElementById('tagCopyBtn');
+            btn.textContent = '已複製！';
+            setTimeout(closeTagModal, 900);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(ta.value).then(done).catch(() => { document.execCommand('copy'); done(); });
+        } else {
+            document.execCommand('copy');
+            done();
+        }
+    }
+
+    return {
+        open,
+        close,
+        handleJoinGroup,
+        handleUpdateNote,
+        handleLeaveGroup,
+        handleEditGroup,
+        handleCloseGroup,
+        openLocationMap,
+        handleGoogleCalClick,
+        handleIcalClick,
+        openNoteHistoryByIndex,
+        closeNoteHistory,
+        openTagModal,
+        closeTagModal,
+        copyTagText,
+        refreshAuthIfOpen: () => {
+            if (currentGroup) {
+                renderJoinedMembers();
+                refreshUserActions();
+            }
+        }
+    };
+})();
