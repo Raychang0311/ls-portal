@@ -1413,15 +1413,12 @@
 }
 
 .gh-comment-composer {
-  position: sticky;
-  top: 0;
-  z-index: 5;
   background: var(--p-surface);
   border: 1px solid var(--line-strong);
   border-radius: var(--r-md);
   padding: 10px 12px;
   margin-bottom: 12px;
-  box-shadow: 0 8px 18px -14px rgba(22, 34, 29, 0.22);
+  box-shadow: 0 4px 12px -10px rgba(22, 34, 29, 0.14);
 }
 
 .gh-replying-bar {
@@ -1638,9 +1635,22 @@
   color: var(--p-action);
 }
 
-.gh-comment-act-btn.is-danger:hover {
+.gh-comment-act-btn.is-danger:hover:not(:disabled) {
   border-color: var(--p-danger);
   color: var(--p-danger);
+}
+
+.gh-comment-act-btn.is-save {
+  border-color: var(--p-action);
+  color: var(--p-action);
+}
+
+.gh-comment-act-btn:disabled {
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+  color: #94a3b8;
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 .gh-comment-edit-box {
