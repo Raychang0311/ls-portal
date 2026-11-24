@@ -14,6 +14,7 @@ window.PortalJukebox = (function() {
     let rafId = null;
     let velocity = 0;
     let isDragging = false;
+    let dragStartIndex = 0;
     let dragStartX = 0;
     let dragStartVirtual = 0;
     let lastMoveX = 0;
@@ -37,25 +38,27 @@ window.PortalJukebox = (function() {
             if (e.target.closest('button, a')) return;
             if (filteredGroups.length <= 1) return;
             isDragging = true;
+            dragStartIndex = activeIndex;
             dragStartX = e.clientX;
             lastMoveX = e.clientX;
             lastMoveTime = performance.now();
-            dragStartVirtual = virtualIndex;
+            dragStartVirtual = activeIndex;
             velocity = 0;
-            stage.setPointerCapture(e.pointerId);
+            try { stage.setPointerCapture(e.pointerId); } catch (err) {}
         });
 
         stage.addEventListener('pointermove', e => {
             if (!isDragging) return;
             const dx = e.clientX - dragStartX;
-            const stepPx = window.innerWidth < 640 ? 220 : 280;
+            const stepPx = window.innerWidth < 640 ? 270 : 320;
             const nextV = dragStartVirtual - (dx / stepPx);
             virtualIndex = clampVirtual(nextV);
             targetIndex = virtualIndex;
 
             const now = performance.now();
-            const dt = Math.max(8, now - lastMoveTime);
-            velocity = (lastMoveX - e.clientX) / dt; // px/ms
+            const dt = Math.max(12, now - lastMoveTime);
+            const instVel = (lastMoveX - e.clientX) / dt; // px/ms (>0 向左滑往下一張)
+            velocity = dt > 120 ? 0 : (velocity * 0.45 + instVel * 0.55);
             lastMoveX = e.clientX;
             lastMoveTime = now;
 
@@ -63,14 +66,41 @@ window.PortalJukebox = (function() {
             apply3DTransforms();
         });
 
+        stage.addEventListener('click', e => {
+            if (performance.now() < suppressClickUntil) {
+                e.stopPropagation();
+                e.preventDefault();
+            }
+        }, true);
+
         const endDrag = e => {
             if (!isDragging) return;
             isDragging = false;
             try { stage.releasePointerCapture(e.pointerId); } catch (err) {}
 
-            // 依放手瞬間水平速度計算慣性跳轉張數
-            const flickCards = Math.abs(velocity) > 0.35 ? Math.sign(velocity) * Math.min(2, Math.round(Math.abs(velocity) * 1.4)) : 0;
-            const snapped = clampIndex(Math.round(virtualIndex + flickCards));
+            if (e.type === 'pointercancel') {
+                goTo(dragStartIndex);
+                return;
+            }
+
+            const totalDx = (typeof e.clientX === 'number' && e.clientX !== 0 ? e.clientX : lastMoveX) - dragStartX;
+            const stepPx = window.innerWidth < 640 ? 270 : 320;
+            const idleMs = performance.now() - lastMoveTime;
+            const effectiveVel = idleMs > 90 ? 0 : velocity;
+
+            let snapped;
+            // 一般單次滑動嚴格限制最多切換 ±1 張，避免手機滑太快誤跳兩張
+            if (Math.abs(totalDx) < stepPx * 1.45) {
+                if (totalDx <= -40 || (effectiveVel > 0.30 && totalDx < -12)) {
+                    snapped = clampIndex(dragStartIndex + 1);
+                } else if (totalDx >= 40 || (effectiveVel < -0.30 && totalDx > 12)) {
+                    snapped = clampIndex(dragStartIndex - 1);
+                } else {
+                    snapped = clampIndex(dragStartIndex);
+                }
+            } else {
+                snapped = clampIndex(Math.round(virtualIndex));
+            }
             goTo(snapped);
         };
 
@@ -521,19 +551,18 @@ window.PortalJukebox = (function() {
                 return;
             }
 
-            // 橫向 3D 弧形旋轉運動學（Jukebox Arc）：維持實體不透明避免卡片文字互相透視
+            // 水平圓筒狀軌道路徑：前後卡片皆維持正向水平、不旋轉傾斜變形，僅隨圓筒曲率水平位移並退入後方景深
             const clamped = Math.max(-2.6, Math.min(2.6, delta));
-            const angle = clamped * 0.56;
-            const tx = Math.sin(angle) * radiusX + clamped * (isMobile ? 48 : 85);
-            const tz = -(1 - Math.cos(angle)) * depthZ - absD * 42;
-            const ty = absD * (isMobile ? 10 : 12);
-            const ry = -clamped * 24;
-            const rz = clamped * 3.2;
-            const sc = Math.max(0.74, 1 - absD * 0.11);
-            const op = absD <= 2.0 ? 1 : Math.max(0, 1 - (absD - 2.0) * 1.1);
-            const bright = Math.max(0.92, 1 - absD * 0.035);
+            const angle = clamped * (isMobile ? 0.50 : 0.44);
+            const cylRadiusX = isMobile ? 250 : 410;
+            const cylDepthZ = isMobile ? 210 : 320;
+            const tx = Math.sin(angle) * cylRadiusX + clamped * (isMobile ? 35 : 70);
+            const tz = -(1 - Math.cos(angle)) * cylDepthZ;
+            const sc = Math.max(0.80, 1 - absD * 0.08);
+            const op = absD <= 2.15 ? 1 : Math.max(0, 1 - (absD - 2.15) * 1.15);
+            const bright = Math.max(0.92, 1 - absD * 0.03);
 
-            card.style.transform = `translate3d(${tx.toFixed(1)}px, ${ty.toFixed(1)}px, ${tz.toFixed(1)}px) rotateY(${ry.toFixed(1)}deg) rotateZ(${rz.toFixed(1)}deg) scale(${sc.toFixed(3)})`;
+            card.style.transform = `translate3d(${tx.toFixed(1)}px, 0px, ${tz.toFixed(1)}px) scale(${sc.toFixed(3)})`;
             card.style.opacity = op.toFixed(3);
             card.style.filter = absD < 0.2 ? '' : `brightness(${bright.toFixed(3)})`;
             card.style.zIndex = String(100 - Math.round(absD * 10));
@@ -583,6 +612,7 @@ window.PortalJukebox = (function() {
 
     function handleCardClick(idx, seqId) {
         if (performance.now() < suppressClickUntil) return;
+        if (isDragging) return;
         if (idx !== activeIndex) {
             goTo(idx);
             return;

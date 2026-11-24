@@ -1302,3 +1302,97 @@ img, svg {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ============================================================================
+   LINE 登入閘道 (移除訪客模式：未登入前不渲染任何入口內容)
+   ============================================================================ */
+body:not(.is-authenticated) {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+body:not(.is-authenticated) > header.nav,
+body:not(.is-authenticated) > main.portal-main,
+body:not(.is-authenticated) > nav.mobile-dock {
+  display: none !important;
+}
+
+.auth-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 4000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: radial-gradient(circle at 20% 15%, rgba(74, 140, 114, 0.14), transparent 55%),
+              var(--p-bg);
+}
+
+.auth-gate[hidden] {
+  display: none !important;
+}
+
+.auth-gate__card {
+  width: min(420px, 100%);
+  background: rgba(255, 255, 255, 0.90);
+  -webkit-backdrop-filter: blur(22px) saturate(145%);
+  backdrop-filter: blur(22px) saturate(145%);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  border-radius: var(--r-lg);
+  padding: 32px 24px 26px;
+  box-shadow: 0 24px 52px -20px rgba(16, 26, 22, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.92);
+  text-align: center;
+}
+
+.auth-gate__logo {
+  width: 68px;
+  height: 68px;
+  margin: 0 auto 18px;
+  border-radius: 18px;
+  background: var(--p-action);
+  color: #ffffff;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.35rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  box-shadow: 0 8px 20px -10px rgba(58, 110, 89, 0.45);
+}
+
+.auth-gate__checking {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+}
+
+.auth-gate__checking[hidden],
+.auth-gate__blocked[hidden] {
+  display: none !important;
+}
+
+.auth-gate__title {
+  margin: 0 0 10px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--p-ink);
+}
+
+.auth-gate__desc {
+  margin: 0;
+  font-size: 0.93rem;
+  line-height: 1.6;
+  color: var(--p-muted);
+}
+
+.auth-gate__actions {
+  margin-top: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}

@@ -28,6 +28,27 @@
 <body>
     <a class="skip-link" href="#mainContent">跳至主要內容</a>
 
+    <!-- LINE 登入閘道（無訪客模式：無法登入僅顯示提示訊息、登入按鈕、離開按鈕） -->
+    <div id="authGate" class="auth-gate" role="dialog" aria-modal="true" aria-labelledby="authGateTitle">
+        <div class="auth-gate__card">
+            <div class="auth-gate__logo">
+                <img class="brand-logo-img" src="https://obs.line-scdn.net/0hTp0LmYC8C18NNRtkYlJ0CF1oAD0-VxVULwEfOChdVgh7VjpTMi8tWiheVmYjfhN1OQMbSSlOCg8obj5iMTIhTnJlHgxgVjVudjgPRmlJIB98VSkIdw/f256x256" alt="L&gt;S 社群 Logo" referrerpolicy="no-referrer" onerror="this.replaceWith(document.createTextNode('L>S'))">
+            </div>
+            <div id="authGateChecking" class="auth-gate__checking">
+                <div class="spinner" aria-hidden="true"></div>
+                <p class="auth-gate__desc">正在驗證 LINE 登入狀態...</p>
+            </div>
+            <div id="authGateBlocked" class="auth-gate__blocked" hidden>
+                <h1 id="authGateTitle" class="auth-gate__title">請登入 LINE 以繼續</h1>
+                <p id="authGateMsg" class="auth-gate__desc">無法自動完成 LINE 登入，本社群入口僅限群組成員透過 LINE 身分驗證存取。</p>
+                <div class="auth-gate__actions">
+                    <button type="button" id="authGateLoginBtn" class="btn btn--primary btn--full" onclick="PortalAuth.triggerLogin()">🔑 登入 LINE</button>
+                    <button type="button" id="authGateLeaveBtn" class="btn btn--secondary btn--full" onclick="PortalAuth.leavePage()">🚪 離開</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 固定頂部導覽列 (taste-skill: 實色背景 + 1px 底線 + 等邊界 .wrap) -->
     <header class="nav" role="banner">
         <div class="wrap nav__inner">
@@ -66,9 +87,9 @@
                     <span aria-hidden="true">＋</span>
                     <span>發起揪團</span>
                 </button>
-                <button type="button" id="portalAuthBtn" class="auth-pill guest" onclick="PortalAuth.handleAuthClick()" title="點擊登入 LINE 驗證身分">
+                <button type="button" id="portalAuthBtn" class="auth-pill" onclick="PortalAuth.handleAuthClick()" title="我的個人數位名片">
                     <span class="auth-dot" aria-hidden="true"></span>
-                    <span id="portalAuthLabel">訪客模式</span>
+                    <span id="portalAuthLabel">驗證中</span>
                 </button>
             </div>
         </div>
@@ -515,12 +536,6 @@
                     <div class="gd-action-head">
                         <span class="gd-section-label" style="margin:0;">🙋‍♂️ 報名與管理</span>
                         <span id="gdAuthTag" class="mono auth-mini-tag">未登入</span>
-                    </div>
-
-                    <!-- 訪客提示 -->
-                    <div id="gdGuestNotice" class="gd-guest-notice" style="display: none;">
-                        <span>目前為訪客瀏覽模式。如需報名、退出或管理活動，請先登入 LINE。</span>
-                        <button type="button" class="btn btn--primary btn--compact" onclick="PortalAuth.triggerLogin()">🔑 登入 LINE</button>
                     </div>
 
                     <!-- 成員操作區 -->

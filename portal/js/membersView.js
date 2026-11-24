@@ -78,7 +78,7 @@ window.PortalMembers = (function() {
         if (Store.currentUserId) {
             wrap.innerHTML = `<button type="button" class="btn btn--secondary btn--compact" onclick="PortalProfile.openByUserId('${escapeHtml(Store.currentUserId)}')">👤 我的數位名片</button>`;
         } else {
-            wrap.innerHTML = `<button type="button" class="btn btn--primary btn--compact" onclick="PortalAuth.triggerLogin()">🔑 登入編輯我的名片</button>`;
+            wrap.innerHTML = '';
         }
     }
 

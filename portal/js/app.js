@@ -6,23 +6,17 @@ window.PortalApp = (function() {
     const VALID_TABS = ['groups', 'members', 'groupHistory', 'leftHistory', 'other'];
     let currentTab = 'groups';
     let deepLinkHandled = false;
+    let portalStarted = false;
 
-    function init() {
-        window.PortalAuth.init();
+    function startAuthenticatedPortal() {
+        if (portalStarted) return;
+        portalStarted = true;
+
         window.PortalProfile.init();
 
         // 平行預載第一優先（揪團大廳）與第二優先（群友名單）
         window.PortalJukebox.init();
         window.PortalMembers.init();
-
-        // 監聽登入狀態變動，即時同步全部視圖
-        window.PortalAuth.onAuthChange(() => {
-            window.PortalJukebox.rerenderCurrent();
-            window.PortalGroupDetail.refreshAuthIfOpen();
-            window.PortalMembers.renderSelfHeaderAction();
-            window.PortalMembers.renderGrid();
-            window.PortalProfile.refreshSelectedMember();
-        });
 
         // 處理初始分頁 URL 參數（如 ?tab=members）
         const reqTab = extractQueryParam('tab') || (window.location.hash ? window.location.hash.replace('#', '').split('?')[0] : '');
@@ -40,8 +34,28 @@ window.PortalApp = (function() {
             const seq = extractQueryParam('seqId') || extractQueryParam('id');
             if (seq) setTimeout(() => window.PortalGroupForm.openEdit(seq), 250);
         }
+    }
+
+    function init() {
+        // 監聽登入狀態變動，即時同步全部視圖；未驗證前不開放進入網站
+        window.PortalAuth.onAuthChange(uid => {
+            if (uid && !portalStarted) {
+                startAuthenticatedPortal();
+                return;
+            }
+            window.PortalJukebox.rerenderCurrent();
+            window.PortalGroupDetail.refreshAuthIfOpen();
+            window.PortalMembers.renderSelfHeaderAction();
+            window.PortalMembers.renderGrid();
+            window.PortalProfile.refreshSelectedMember();
+        });
+
+        window.PortalAuth.init(authenticated => {
+            if (authenticated) startAuthenticatedPortal();
+        });
 
         window.addEventListener('resize', () => {
+            if (!portalStarted) return;
             syncTabIndicator('#desktopNavTabs', '.nav__tab[aria-current="page"]');
             syncTabIndicator('#jukeboxFilterTabs', '.filter-tab.is-active');
             syncTabIndicator('#memberQuickFilters', '.filter-tab.is-active');

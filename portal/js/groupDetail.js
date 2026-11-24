@@ -251,15 +251,13 @@ window.PortalGroupDetail = (function() {
     function refreshUserActions() {
         if (!currentGroup) return;
         const authTag = document.getElementById('gdAuthTag');
-        const guestBox = document.getElementById('gdGuestNotice');
         const memberArea = document.getElementById('gdMemberActions');
         const hostBox = document.getElementById('gdHostControls');
         const btnRow = document.getElementById('gdActionBtnRow');
         const noteInput = document.getElementById('gdActionNote');
 
         if (!Store.currentUserId) {
-            if (authTag) { authTag.textContent = '訪客模式'; authTag.classList.remove('is-ok'); }
-            if (guestBox) guestBox.style.display = 'flex';
+            if (authTag) { authTag.textContent = '未登入'; authTag.classList.remove('is-ok'); }
             if (memberArea) memberArea.style.display = 'none';
             return;
         }
@@ -268,7 +266,6 @@ window.PortalGroupDetail = (function() {
             authTag.textContent = '👤 ' + (Store.currentDisplayName || '已登入');
             authTag.classList.add('is-ok');
         }
-        if (guestBox) guestBox.style.display = 'none';
         if (memberArea) memberArea.style.display = 'block';
 
         const uidLower = Store.currentUserId.toLowerCase();
