@@ -28,7 +28,7 @@
 <body>
     <a class="skip-link" href="#mainContent">跳至主要內容</a>
 
-    <!-- LINE 登入閘道（無訪客模式：無法登入僅顯示提示訊息、登入按鈕、離開按鈕） -->
+    <!-- LINE 登入閘道（無訪客模式：無法登入僅顯示提示訊息與登入按鈕） -->
     <div id="authGate" class="auth-gate" role="dialog" aria-modal="true" aria-labelledby="authGateTitle">
         <div class="auth-gate__card">
             <div class="auth-gate__logo">
@@ -43,7 +43,6 @@
                 <p id="authGateMsg" class="auth-gate__desc">無法自動完成 LINE 登入，本社群入口僅限群組成員透過 LINE 身分驗證存取。</p>
                 <div class="auth-gate__actions">
                     <button type="button" id="authGateLoginBtn" class="btn btn--primary btn--full" onclick="PortalAuth.triggerLogin()">🔑 登入 LINE</button>
-                    <button type="button" id="authGateLeaveBtn" class="btn btn--secondary btn--full" onclick="PortalAuth.leavePage()">🚪 離開</button>
                 </div>
             </div>
         </div>
