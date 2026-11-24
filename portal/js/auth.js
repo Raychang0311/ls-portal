@@ -166,15 +166,38 @@ window.PortalAuth = (function() {
     }
 
     function leavePage() {
-        if (window.liff && typeof liff.isInClient === 'function' && liff.isInClient()) {
+        // 1. 若處於 LINE / LIFF 環境，直接呼叫 liff.closeWindow() 關閉 LIFF 視窗
+        if (window.liff && typeof liff.closeWindow === 'function') {
             try {
                 liff.closeWindow();
-                return;
             } catch (e) {}
         }
-        try { window.close(); } catch (e) {}
-        const msgEl = document.getElementById('authGateMsg');
-        if (msgEl) msgEl.textContent = '已取消登入，請直接關閉此分頁或返回 LINE 聊天室。';
+
+        // 2. 嘗試於同步點擊事件堆疊直接關閉當前分頁
+        try {
+            window.close();
+        } catch (e) {}
+
+        // 3. 若未立即關閉，嘗試退回上一頁或透過 _self 關閉並顯示已離開狀態
+        setTimeout(() => {
+            if (window.closed) return;
+            if (window.history.length > 1) {
+                try {
+                    window.history.back();
+                } catch (e) {}
+            } else {
+                try {
+                    window.open('about:blank', '_self');
+                    window.close();
+                } catch (e) {}
+            }
+            const titleEl = document.getElementById('authGateTitle');
+            const msgEl = document.getElementById('authGateMsg');
+            const loginBtn = document.getElementById('authGateLoginBtn');
+            if (titleEl) titleEl.textContent = '已離開網站';
+            if (msgEl) msgEl.textContent = '請直接關閉此分頁或返回 LINE 聊天室。';
+            if (loginBtn) loginBtn.hidden = true;
+        }, 220);
     }
 
     function triggerLogin() {
