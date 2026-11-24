@@ -84,7 +84,7 @@ window.PortalAuth = (function() {
         if (checking) checking.hidden = true;
         if (blocked) blocked.hidden = false;
         if (titleEl) titleEl.textContent = title || '無法登入 LINE';
-        if (msgEl) msgEl.textContent = message || '無法自動完成 LINE 登入，請點擊下方按鈕登入 LINE，或離開此頁面。';
+        if (msgEl) msgEl.textContent = message || '無法自動完成 LINE 登入，請點擊下方按鈕登入 LINE。';
     }
 
     function init(onReady) {
@@ -96,7 +96,7 @@ window.PortalAuth = (function() {
             if (Store.currentUserId) {
                 hideAuthGate();
             } else {
-                showLoginGate('無法自動登入 LINE', '本社群入口僅限群組成員透過 LINE 帳號登入使用，請點擊下方按鈕登入 LINE 或離開。');
+                showLoginGate('無法自動登入 LINE', '本社群入口僅限群組成員透過 LINE 帳號登入使用，請點擊下方按鈕登入 LINE。');
             }
             if (typeof onReady === 'function') onReady(Boolean(Store.currentUserId));
         };
@@ -165,41 +165,6 @@ window.PortalAuth = (function() {
         }
     }
 
-    function leavePage() {
-        // 1. 若處於 LINE / LIFF 環境，直接呼叫 liff.closeWindow() 關閉 LIFF 視窗
-        if (window.liff && typeof liff.closeWindow === 'function') {
-            try {
-                liff.closeWindow();
-            } catch (e) {}
-        }
-
-        // 2. 嘗試於同步點擊事件堆疊直接關閉當前分頁
-        try {
-            window.close();
-        } catch (e) {}
-
-        // 3. 若未立即關閉，嘗試退回上一頁或透過 _self 關閉並顯示已離開狀態
-        setTimeout(() => {
-            if (window.closed) return;
-            if (window.history.length > 1) {
-                try {
-                    window.history.back();
-                } catch (e) {}
-            } else {
-                try {
-                    window.open('about:blank', '_self');
-                    window.close();
-                } catch (e) {}
-            }
-            const titleEl = document.getElementById('authGateTitle');
-            const msgEl = document.getElementById('authGateMsg');
-            const loginBtn = document.getElementById('authGateLoginBtn');
-            if (titleEl) titleEl.textContent = '已離開網站';
-            if (msgEl) msgEl.textContent = '請直接關閉此分頁或返回 LINE 聊天室。';
-            if (loginBtn) loginBtn.hidden = true;
-        }, 220);
-    }
-
     function triggerLogin() {
         if (window.liff && activeLiffId && !activeLiffId.includes('YOUR_PORTAL_LIFF_ID')) {
             if (liffReady) {
@@ -234,7 +199,6 @@ window.PortalAuth = (function() {
         init,
         onAuthChange,
         triggerLogin,
-        leavePage,
         showLoginGate,
         handleAuthClick,
         setLoadedDirectoryUid,
