@@ -216,6 +216,7 @@
                     <button type="button" class="filter-tab tab is-active" data-mfilter="all" onclick="PortalMembers.setQuickFilter('all')">全部群友</button>
                     <button type="button" class="filter-tab tab" data-mfilter="birthday" onclick="PortalMembers.setQuickFilter('birthday')">本月壽星</button>
                     <button type="button" class="filter-tab tab" data-mfilter="active" onclick="PortalMembers.setQuickFilter('active')">本月活躍</button>
+                    <span class="filter-row-break" aria-hidden="true"></span>
                     <button type="button" class="filter-tab tab" data-mfilter="unsend" onclick="PortalMembers.setQuickFilter('unsend')">收回排行</button>
                     <button type="button" class="filter-tab tab" data-mfilter="host" onclick="PortalMembers.setQuickFilter('host')">揪團排行</button>
                     <button type="button" class="filter-tab tab" data-mfilter="join" onclick="PortalMembers.setQuickFilter('join')">參團排行</button>
@@ -613,6 +614,9 @@
                     <div class="gd-action-btns" id="gdActionBtnRow"></div>
                 </div>
             </div>
+
+            <!-- 活動群組提醒提示 -->
+            <div id="gdRemindBanner" class="gd-remind-banner" style="display: none;"></div>
 
             <!-- 參加者名單 -->
             <div class="gd-section">

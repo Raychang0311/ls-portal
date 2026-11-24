@@ -33,14 +33,23 @@ window.PortalGroupDetail = (function() {
         const overlay = document.getElementById('groupDetailOverlay');
         if (!overlay) return;
 
+        const scrollBody = document.getElementById('gdBodyScroll');
+        const forceScrollTop = () => {
+            if (scrollBody) scrollBody.scrollTop = 0;
+        };
+
         const token = ++activeOpenToken;
         renderedMapKey = '';
+        overlay.classList.add('is-open');
+        document.body.style.overflow = 'hidden';
+        forceScrollTop();
+
         const cached = Store.groups.find(g => String(g.seqId) === String(seqId));
         if (cached) {
             setDetailLoading(false);
             renderGroup(cached, { resetScroll: true });
-            overlay.classList.add('is-open');
-            document.body.style.overflow = 'hidden';
+            forceScrollTop();
+            requestAnimationFrame(forceScrollTop);
             // 已有快取時秒開抽屜，背景僅輕量同步名單與備註，不重設捲動位置、不等待小地圖
             fetchSingleGroup(seqId, true, token, { skipMembers: true, skipResolve: true, resetScroll: false });
             return;
@@ -51,10 +60,12 @@ window.PortalGroupDetail = (function() {
         document.getElementById('gdTitle').textContent = '載入揪團資訊中...';
         document.getElementById('gdContent').textContent = '';
         document.getElementById('gdJoinedList').innerHTML = '';
+        const remindEl = document.getElementById('gdRemindBanner');
+        if (remindEl) remindEl.style.display = 'none';
 
-        overlay.classList.add('is-open');
-        document.body.style.overflow = 'hidden';
         setDetailLoading(true);
+        forceScrollTop();
+        requestAnimationFrame(forceScrollTop);
         fetchSingleGroup(seqId, false, token, {
             skipMembers: Store.members.length > 0,
             skipResolve: true,
@@ -124,6 +135,8 @@ window.PortalGroupDetail = (function() {
         if (!overlay) return;
         overlay.classList.remove('is-open');
         document.body.style.overflow = '';
+        const scrollBody = document.getElementById('gdBodyScroll');
+        if (scrollBody) scrollBody.scrollTop = 0;
         if (leafletMap) {
             leafletMap.remove();
             leafletMap = null;
@@ -215,10 +228,27 @@ window.PortalGroupDetail = (function() {
         }
 
         renderJoinedMembers();
+        renderRemindBanner(g);
         refreshUserActions();
 
         if (scrollBody) {
             scrollBody.scrollTop = shouldResetScroll ? 0 : prevScrollTop;
+        }
+    }
+
+    function renderRemindBanner(g) {
+        const el = document.getElementById('gdRemindBanner');
+        if (!el) return;
+        const remindVal = parseFloat(g && g.remindHours);
+        if (!isNaN(remindVal) && remindVal > 0) {
+            const timeText = remindVal < 1
+                ? `${Math.max(1, Math.round(remindVal * 60))} 分鐘`
+                : `${remindVal} 小時`;
+            el.textContent = `🔔 該揪團設定於活動開始前 ${timeText} 於群組內提醒參加者`;
+            el.style.display = 'flex';
+        } else {
+            el.textContent = '';
+            el.style.display = 'none';
         }
     }
 

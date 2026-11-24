@@ -68,7 +68,7 @@ window.PortalOther = (function() {
         { cat: 'fun', cmd: '孤狗 問題或內容', aliases: ['谷歌 問題或內容'], desc: '呼叫 Gemini 模型回答提問並引用原訊息回覆。', copy: '孤狗 ' },
         { cat: 'fun', cmd: '召喚貓貓', aliases: ['召喚貓咪', '召喚卯咪'], desc: '隨機召喚一張可愛貓咪照片。', copy: '召喚貓貓' },
         { cat: 'fun', cmd: '召喚狗狗', aliases: ['召喚狗勾'], desc: '隨機召喚一張可愛狗狗照片。', copy: '召喚狗狗' },
-        { cat: 'fun', cmd: '召喚柴柴', aliases: ['召喚+犬種或貓種名稱（如 召喚柯基、召喚布偶）'], desc: '依 Static_Msgs 品種對照表召喚指定品種的貓咪或狗狗圖片。', copy: '召喚柴柴' },
+        { cat: 'fun', cmd: '召喚柴柴', aliases: ['召喚+犬種或貓種名稱（如 召喚柯基、召喚布偶）'], desc: '依品種對照表召喚指定品種的貓咪或狗狗圖片。', copy: '召喚柴柴' },
         { cat: 'fun', cmd: '機機CALL 關鍵字', aliases: ['GGCALL 關鍵字', '機機摳 關鍵字'], desc: '搜尋 YouTube 並回覆最相關的影片預覽卡片與連結。', copy: '機機CALL ' },
         { cat: 'fun', cmd: '機機 關鍵字.jpg', aliases: ['GG 關鍵字.jpg / .jpeg / .gif / .png'], desc: '以 Google 圖片搜尋指定關鍵字並隨機回覆一張圖片或 GIF 動圖。', copy: '機機 .jpg' },
 
