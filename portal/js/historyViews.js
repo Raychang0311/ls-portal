@@ -792,6 +792,11 @@ window.PortalHistory = (function() {
         populateGhDetail('ghSheet', entry);
         document.getElementById('ghSheetOverlay').classList.add('is-open');
         document.body.style.overflow = 'hidden';
+        const ghBody = document.getElementById('ghSheetBody');
+        if (ghBody) ghBody.scrollTop = 0;
+        if (window.PortalApi && window.PortalApi.syncDetailDrawerOffset) {
+            window.PortalApi.syncDetailDrawerOffset('ghSheetPanel');
+        }
     }
 
     function closeGhSheet() {

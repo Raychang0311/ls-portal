@@ -215,6 +215,25 @@ window.PortalApi = (function() {
         el.textContent = parts.length > 0 ? parts.join(' · ') : '社群入口網站';
     }
 
+    /** 依懸浮液態玻璃頂欄實際高度同步詳情內容上內距，避免手機版換行時遮住標題 */
+    function syncDetailDrawerOffset(panelOrId) {
+        const panel = typeof panelOrId === 'string' ? document.getElementById(panelOrId) : panelOrId;
+        if (!panel) return;
+        const header = panel.querySelector('.drawer-header');
+        const body = panel.querySelector('.drawer-body');
+        if (!header || !body) return;
+        const apply = () => {
+            const h = header.offsetHeight;
+            if (!h) return;
+            const topOffset = Math.max(88, header.offsetTop + h + 18);
+            const val = topOffset + 'px';
+            body.style.paddingTop = val;
+            body.style.scrollPaddingTop = val;
+        };
+        apply();
+        requestAnimationFrame(apply);
+    }
+
     return {
         PORTAL_LIFF_ID,
         GAS_ENDPOINTS,
@@ -228,6 +247,7 @@ window.PortalApi = (function() {
         openExternalUrl,
         findMemberById,
         formatSmartDateRange,
-        updateNavSummary
+        updateNavSummary,
+        syncDetailDrawerOffset
     };
 })();

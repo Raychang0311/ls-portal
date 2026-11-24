@@ -174,6 +174,10 @@ window.PortalGroupDetail = (function() {
             statusEl.textContent = isFull ? '已額滿' : '開放報名';
             statusEl.className = 'status-pill ' + (isFull ? 'is-early' : 'is-done');
         }
+        const gdPanel = document.querySelector('#groupDetailOverlay .detail-drawer');
+        if (gdPanel && window.PortalApi && window.PortalApi.syncDetailDrawerOffset) {
+            window.PortalApi.syncDetailDrawerOffset(gdPanel);
+        }
 
         // 地點與 Leaflet 地圖（完全非同步載入，不阻塞詳情且不改變捲動位置）
         const locCard = document.getElementById('gdLocationCard');
