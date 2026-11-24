@@ -1952,3 +1952,237 @@ mark.hl {
     background: #0f766e;
   }
 }
+
+/* ============================================================================
+   7. 其他分頁擴充：每日群聊熱度圖表 + 機器人咒語小抄
+   ============================================================================ */
+.other-toolbox-card {
+  margin-top: 20px;
+  padding: 22px 20px;
+  border-radius: var(--r-lg);
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+
+#view-other .other-links-grid {
+  margin-top: 20px;
+}
+
+.other-toolbox-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.other-section-title {
+  margin: 4px 0 0;
+  font-size: 1.18rem;
+  font-weight: 700;
+  color: var(--p-ink);
+}
+
+.other-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+@media (min-width: 720px) {
+  .other-kpi-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.other-kpi-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 12px 14px;
+  border-radius: var(--r-md);
+  background: var(--p-surface-tint);
+  border: 1px solid var(--line);
+}
+
+.other-kpi-lbl {
+  font-size: 0.76rem;
+  color: var(--p-muted);
+  font-weight: 600;
+}
+
+.other-kpi-val {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--p-action);
+  line-height: 1.2;
+}
+
+.other-kpi-val small {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--p-muted);
+}
+
+.other-kpi-sub {
+  font-size: 0.72rem;
+  color: var(--p-muted);
+}
+
+.other-chart-stage {
+  position: relative;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 12px 12px 8px;
+}
+
+.other-chart-tooltip {
+  font-size: 0.82rem;
+  color: var(--p-ink);
+  margin-bottom: 6px;
+  min-height: 20px;
+}
+
+.other-chat-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  touch-action: pan-y;
+  cursor: crosshair;
+}
+
+.chart-grid-line {
+  stroke: rgba(15, 23, 42, 0.08);
+  stroke-dasharray: 3 4;
+}
+
+.chart-axis-text {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  fill: #64748b;
+}
+
+.chart-dot {
+  fill: #ffffff;
+  stroke: #0d9488;
+  stroke-width: 1.8;
+}
+
+.chart-crosshair {
+  stroke: rgba(13, 148, 136, 0.45);
+  stroke-width: 1.2;
+  stroke-dasharray: 3 3;
+}
+
+.chart-active-dot {
+  fill: #0d9488;
+  stroke: #ffffff;
+  stroke-width: 2;
+}
+
+.other-cmd-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.other-commands-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+@media (min-width: 680px) {
+  .other-commands-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1040px) {
+  .other-commands-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.other-cmd-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 15px;
+  border-radius: var(--r-md);
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid var(--line);
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.other-cmd-card:hover {
+  border-color: color-mix(in oklab, var(--p-accent) 42%, transparent);
+}
+
+.cmd-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.cmd-cat-tag {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--p-action);
+  background: var(--p-accent-soft);
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.cmd-copy-btn {
+  border: 1px solid var(--line-strong);
+  background: var(--p-surface);
+  color: var(--p-ink);
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cmd-copy-btn:hover {
+  border-color: var(--p-action);
+  color: var(--p-action);
+}
+
+.cmd-main-code {
+  font-size: 0.96rem;
+  font-weight: 700;
+  color: var(--p-ink);
+}
+
+.cmd-desc {
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.5;
+  color: var(--p-muted);
+}
+
+.cmd-aliases {
+  font-size: 0.75rem;
+  color: var(--p-muted);
+  line-height: 1.55;
+}
+
+.cmd-aliases code {
+  background: var(--p-surface-tint);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  margin-right: 3px;
+}

@@ -353,15 +353,10 @@ window.PortalJukebox = (function() {
 
     function getStatusBadge(g) {
         const uidLower = Store.currentUserId ? Store.currentUserId.toLowerCase() : '';
-        const isHost = uidLower && g.hostId && String(g.hostId).toLowerCase() === uidLower;
         const isJoined = uidLower && Array.isArray(g.joinedList) && g.joinedList.some(m => String(m.id).toLowerCase() === uidLower);
         const waitlist = Array.isArray(g.waitlist) ? g.waitlist : [];
         const waitIdx = uidLower ? waitlist.findIndex(m => String(m.id).toLowerCase() === uidLower) : -1;
-        const maxL = parseInt(g.maxLimit, 10) || 99;
-        const cur = (g.joinedList && g.joinedList.length) || 0;
-        const isFull = maxL !== 99 && cur >= maxL;
 
-        if (isHost) return { text: '👑 我是主揪', cls: '' };
         if (isJoined) return { text: '✅ 已報名', cls: '' };
         if (waitIdx !== -1) return { text: `⏳ 候補 #${waitIdx + 1}`, cls: 'is-soon' };
 
@@ -369,18 +364,20 @@ window.PortalJukebox = (function() {
             const diffHours = (new Date(g.startDate).getTime() - Date.now()) / 36e5;
             if (!isNaN(diffHours)) {
                 if (diffHours <= 0) return { text: '⚡ 進行中', cls: 'is-soon' };
-                if (diffHours <= 24) return { text: '⚡ 即將開始', cls: 'is-soon' };
+                if (diffHours < 1) {
+                    const mins = Math.max(1, Math.round(diffHours * 60));
+                    if (mins >= 60) return { text: '⚡ 1 小時後', cls: 'is-soon' };
+                    return { text: `⚡ ${mins} 分鐘後`, cls: 'is-soon' };
+                }
+                if (diffHours < 24) {
+                    const hrs = Math.max(1, Math.floor(diffHours));
+                    return { text: `⚡ ${hrs} 小時後`, cls: 'is-soon' };
+                }
                 const days = Math.ceil(diffHours / 24);
                 return { text: `🗓️ ${days} 天後`, cls: '' };
             }
         }
-        if (isFull) {
-            return {
-                text: waitlist.length > 0 ? `⛔ 已額滿 · 候補 ${waitlist.length}` : '⛔ 已額滿',
-                cls: 'is-full'
-            };
-        }
-        return { text: '開放報名', cls: '' };
+        return null;
     }
 
     function stripHtmlToText(htmlStr) {
@@ -437,7 +434,7 @@ window.PortalJukebox = (function() {
                     <div>
                         <div class="jb-top">
                             <span class="jb-track-id">${trackNum} / ${totalStr}</span>
-                            <span class="jb-status-badge ${badge.cls}">${escapeHtml(badge.text)}</span>
+                            ${badge && badge.text ? `<span class="jb-status-badge ${badge.cls}">${escapeHtml(badge.text)}</span>` : ''}
                         </div>
                         <h2 class="jb-title">${escapeHtml(g.title || '揪團活動')}</h2>
                         <div class="jb-meta-panel">

@@ -7,6 +7,7 @@ window.PortalGroupDetail = (function() {
     let currentGroup = null;
     let targetMapUrl = '';
     let leafletMap = null;
+    let renderedMapKey = '';
     let isDetailLoading = false;
     let activeOpenToken = 0;
 
@@ -33,25 +34,41 @@ window.PortalGroupDetail = (function() {
         if (!overlay) return;
 
         const token = ++activeOpenToken;
+        renderedMapKey = '';
         const cached = Store.groups.find(g => String(g.seqId) === String(seqId));
         if (cached) {
-            renderGroup(cached);
-        } else {
-            currentGroup = { seqId: String(seqId) };
-            document.getElementById('gdDate').textContent = '';
-            document.getElementById('gdTitle').textContent = '載入揪團資訊中...';
-            document.getElementById('gdContent').textContent = '';
-            document.getElementById('gdJoinedList').innerHTML = '';
+            setDetailLoading(false);
+            renderGroup(cached, { resetScroll: true });
+            overlay.classList.add('is-open');
+            document.body.style.overflow = 'hidden';
+            // 已有快取時秒開抽屜，背景僅輕量同步名單與備註，不重設捲動位置、不等待小地圖
+            fetchSingleGroup(seqId, true, token, { skipMembers: true, skipResolve: true, resetScroll: false });
+            return;
         }
+
+        currentGroup = { seqId: String(seqId) };
+        document.getElementById('gdDate').textContent = '';
+        document.getElementById('gdTitle').textContent = '載入揪團資訊中...';
+        document.getElementById('gdContent').textContent = '';
+        document.getElementById('gdJoinedList').innerHTML = '';
 
         overlay.classList.add('is-open');
         document.body.style.overflow = 'hidden';
         setDetailLoading(true);
-        fetchSingleGroup(seqId, false, token);
+        fetchSingleGroup(seqId, false, token, {
+            skipMembers: Store.members.length > 0,
+            skipResolve: true,
+            resetScroll: true
+        });
     }
 
-    function fetchSingleGroup(seqId, silent, token) {
-        callGasApi('group', 'getGroup', { seqId: seqId }, res => {
+    function fetchSingleGroup(seqId, silent, token, opts) {
+        const options = opts || {};
+        const params = { seqId: seqId };
+        if (options.skipMembers) params.skipMembers = '1';
+        if (options.skipResolve) params.skipResolve = '1';
+
+        callGasApi('group', 'getGroup', params, res => {
             if (token && token !== activeOpenToken) return;
             setDetailLoading(false);
             if (!res || res.success === false) {
@@ -62,7 +79,15 @@ window.PortalGroupDetail = (function() {
                 return;
             }
 
+            const existing = Store.groups.find(g => String(g.seqId) === String(seqId));
             const normalized = Object.assign({ seqId: String(seqId) }, res);
+            // 保留已解析的座標與網址，避免 skipResolve 覆蓋掉既有的小地圖座標
+            if (existing) {
+                if (!normalized.locationLat && existing.locationLat) normalized.locationLat = existing.locationLat;
+                if (!normalized.locationLng && existing.locationLng) normalized.locationLng = existing.locationLng;
+                if (!normalized.locationResolvedUrl && existing.locationResolvedUrl) normalized.locationResolvedUrl = existing.locationResolvedUrl;
+            }
+
             const idx = Store.groups.findIndex(g => String(g.seqId) === String(seqId));
             if (idx !== -1) {
                 Store.groups[idx] = Object.assign({}, Store.groups[idx], normalized);
@@ -76,13 +101,12 @@ window.PortalGroupDetail = (function() {
             }
 
             if (!silent || (currentGroup && String(currentGroup.seqId) === String(seqId))) {
-                renderGroup(normalized);
+                renderGroup(normalized, { resetScroll: Boolean(options.resetScroll) });
                 const overlay = document.getElementById('groupDetailOverlay');
                 if (overlay && !overlay.classList.contains('is-open')) {
                     overlay.classList.add('is-open');
                     document.body.style.overflow = 'hidden';
                 }
-                setTimeout(() => { if (leafletMap) leafletMap.invalidateSize(); }, 220);
             }
         }, err => {
             if (token && token !== activeOpenToken) return;
@@ -91,7 +115,7 @@ window.PortalGroupDetail = (function() {
                 close();
                 Swal.fire('錯誤', '載入揪團詳情失敗：' + err, 'error');
             }
-        });
+        }, { preferGet: true });
     }
 
     function close() {
@@ -104,10 +128,15 @@ window.PortalGroupDetail = (function() {
             leafletMap.remove();
             leafletMap = null;
         }
+        renderedMapKey = '';
         currentGroup = null;
     }
 
-    function renderGroup(g) {
+    function renderGroup(g, opts) {
+        const scrollBody = document.getElementById('gdBodyScroll');
+        const prevScrollTop = scrollBody ? scrollBody.scrollTop : 0;
+        const shouldResetScroll = Boolean(opts && opts.resetScroll);
+
         currentGroup = g;
 
         document.getElementById('gdDate').textContent = window.PortalApi.formatSmartDateRange(g.startDate, g.endDate, g.date);
@@ -133,7 +162,7 @@ window.PortalGroupDetail = (function() {
             statusEl.className = 'status-pill ' + (isFull ? 'is-early' : 'is-done');
         }
 
-        // 地點與 Leaflet 地圖
+        // 地點與 Leaflet 地圖（完全非同步載入，不阻塞詳情且不改變捲動位置）
         const locCard = document.getElementById('gdLocationCard');
         const locName = g.locationName || '';
         const locUrl = g.locationUrl || '';
@@ -155,8 +184,8 @@ window.PortalGroupDetail = (function() {
 
             if (g.locationLat && g.locationLng) {
                 renderMapPreview(g.locationLat, g.locationLng);
-            } else {
-                initLocationMap(locName, locUrl, locAddr);
+            } else if (!renderedMapKey.startsWith(String(g.seqId) + '|')) {
+                initLocationMap(locName, locUrl, locAddr, g.seqId);
             }
         } else {
             locCard.style.display = 'none';
@@ -188,8 +217,9 @@ window.PortalGroupDetail = (function() {
         renderJoinedMembers();
         refreshUserActions();
 
-        const scrollBody = document.getElementById('gdBodyScroll');
-        if (scrollBody) scrollBody.scrollTop = 0;
+        if (scrollBody) {
+            scrollBody.scrollTop = shouldResetScroll ? 0 : prevScrollTop;
+        }
     }
 
     function buildMemberGridHtml(list, isWaitlist) {
@@ -354,8 +384,7 @@ window.PortalGroupDetail = (function() {
 
     function reloadGroupAfterPrompt(seqId) {
         if (currentGroup && String(currentGroup.seqId) === String(seqId)) {
-            setDetailLoading(true);
-            fetchSingleGroup(seqId, false, ++activeOpenToken);
+            fetchSingleGroup(seqId, true, ++activeOpenToken, { skipMembers: true, skipResolve: true, resetScroll: false });
         }
         if (window.PortalJukebox && window.PortalJukebox.refresh) {
             window.PortalJukebox.refresh(true, seqId);
@@ -503,48 +532,73 @@ window.PortalGroupDetail = (function() {
         });
     }
 
-    function initLocationMap(name, url, address) {
+    function initLocationMap(name, url, address, seqId) {
         if (!window.L) return;
+        const targetSeq = String(seqId || (currentGroup && currentGroup.seqId) || '');
         const coordMatch = (url || '').match(/@(-?\d+\.\d+),(-?\d+\.\d+)/) ||
             (url || '').match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/) ||
             (url || '').match(/[?&](?:query|q|ll)=(-?\d+\.\d+),(-?\d+\.\d+)/) ||
             (url || '').match(/center=(-?\d+\.\d+)(?:%2C|,)(-?\d+\.\d+)/);
 
         if (coordMatch) {
-            renderMapPreview(parseFloat(coordMatch[1]), parseFloat(coordMatch[2]));
+            const lat = parseFloat(coordMatch[1]);
+            const lng = parseFloat(coordMatch[2]);
+            if (currentGroup && String(currentGroup.seqId) === targetSeq) {
+                currentGroup.locationLat = lat;
+                currentGroup.locationLng = lng;
+            }
+            renderMapPreview(lat, lng);
             return;
         }
 
         if (url || address || name) {
             callGasApi('group', 'resolveLocation', { url: url, name: name, address: address }, coords => {
+                if (!currentGroup || (targetSeq && String(currentGroup.seqId) !== targetSeq)) return;
                 if (coords && coords.lat && coords.lng) {
+                    currentGroup.locationLat = coords.lat;
+                    currentGroup.locationLng = coords.lng;
                     if (coords.resolvedUrl) {
+                        currentGroup.locationResolvedUrl = coords.resolvedUrl;
                         targetMapUrl = coords.resolvedUrl;
                         const linkEl = document.getElementById('gdLocMapLink');
                         if (linkEl) linkEl.href = targetMapUrl;
                     }
+                    const cached = Store.groups.find(g => String(g.seqId) === targetSeq);
+                    if (cached) {
+                        cached.locationLat = coords.lat;
+                        cached.locationLng = coords.lng;
+                        if (coords.resolvedUrl) cached.locationResolvedUrl = coords.resolvedUrl;
+                    }
                     renderMapPreview(coords.lat, coords.lng);
                 } else {
-                    fallbackGeocode(name, address);
+                    fallbackGeocode(name, address, targetSeq);
                 }
-            }, () => fallbackGeocode(name, address));
+            }, () => fallbackGeocode(name, address, targetSeq));
         } else {
-            fallbackGeocode(name, address);
+            fallbackGeocode(name, address, targetSeq);
         }
     }
 
-    function fallbackGeocode(name, address) {
+    function fallbackGeocode(name, address, targetSeq) {
         const cleanName = name ? name.replace(/（[^）]*）|\([^)]*\)|\[[^\]]*\]/g, '').trim() : '';
         const queries = [address, cleanName, name].map(q => q ? String(q).trim() : '').filter((q, i, arr) => q && arr.indexOf(q) === i);
         if (!queries.length) { renderMapPreview(25.0330, 121.5654); return; }
 
         const tryQ = idx => {
+            if (targetSeq && (!currentGroup || String(currentGroup.seqId) !== targetSeq)) return;
             if (idx >= queries.length) { renderMapPreview(25.0330, 121.5654); return; }
             fetch('https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(queries[idx]) + '&countrycodes=tw&format=json&limit=1')
                 .then(r => r.json())
                 .then(list => {
+                    if (targetSeq && (!currentGroup || String(currentGroup.seqId) !== targetSeq)) return;
                     if (Array.isArray(list) && list.length > 0) {
-                        renderMapPreview(parseFloat(list[0].lat), parseFloat(list[0].lon));
+                        const lat = parseFloat(list[0].lat);
+                        const lng = parseFloat(list[0].lon);
+                        if (currentGroup) {
+                            currentGroup.locationLat = lat;
+                            currentGroup.locationLng = lng;
+                        }
+                        renderMapPreview(lat, lng);
                     } else {
                         tryQ(idx + 1);
                     }
@@ -558,7 +612,18 @@ window.PortalGroupDetail = (function() {
         try {
             const mapEl = document.getElementById('gdMapView');
             if (!mapEl || !window.L) return;
+
+            const seq = currentGroup ? String(currentGroup.seqId || '') : '';
+            const mapKey = `${seq}|${Number(lat).toFixed(5)}|${Number(lng).toFixed(5)}`;
+            if (leafletMap && renderedMapKey === mapKey) {
+                return;
+            }
+
+            const scrollBody = document.getElementById('gdBodyScroll');
+            const prevScrollTop = scrollBody ? scrollBody.scrollTop : 0;
+
             if (leafletMap) { leafletMap.remove(); leafletMap = null; }
+            renderedMapKey = mapKey;
 
             leafletMap = L.map('gdMapView', {
                 center: [lat, lng],
@@ -579,7 +644,14 @@ window.PortalGroupDetail = (function() {
                 iconSize: [0, 0]
             });
             L.marker([lat, lng], { icon: pin }).addTo(leafletMap);
-            setTimeout(() => { if (leafletMap) leafletMap.invalidateSize(); }, 250);
+
+            if (scrollBody) scrollBody.scrollTop = prevScrollTop;
+            setTimeout(() => {
+                if (!leafletMap) return;
+                const keepScroll = scrollBody ? scrollBody.scrollTop : prevScrollTop;
+                leafletMap.invalidateSize({ pan: false });
+                if (scrollBody) scrollBody.scrollTop = keepScroll;
+            }, 250);
         } catch (e) {}
     }
 

@@ -167,6 +167,9 @@ window.PortalHistory = (function() {
         applyGhFilters();
     }
 
+    const LEFT_MEMBER_NAME = '已退群成員';
+    const LEFT_MEMBER_AVATAR = 'https://obs.line-scdn.net/0hTp0LmYC8C18NNRtkYlJ0CF1oAD0-VxVULwEfOChdVgh7VjpTMi8tWiheVmYjfhN1OQMbSSlOCg8obj5iMTIhTnJlHgxgVjVudjgPRmlJIB98VSkIdw/f256x256';
+
     function normalizeGhComments(rawList) {
         if (!Array.isArray(rawList)) return [];
         return rawList
@@ -179,12 +182,14 @@ window.PortalHistory = (function() {
                 const rNum = (c.replyTo !== undefined && c.replyTo !== null && c.replyTo !== '' && !isNaN(parseInt(c.replyTo, 10)))
                     ? parseInt(c.replyTo, 10)
                     : null;
+                const rawName = String(c.userName || '').trim();
+                const isLeftFallback = !m && (!rawName || rawName === '曾在此團之群友' || rawName === LEFT_MEMBER_NAME);
                 return {
                     floor: floorNum,
                     time: String(c.time || '').trim(),
                     userId: uid,
-                    userName: String(c.userName || (m && m.name) || '群友'),
-                    userPic: String(c.userPic || (m && m.pic) || 'https://imgur.com/786FxAA.jpg'),
+                    userName: m ? m.name : (isLeftFallback ? LEFT_MEMBER_NAME : rawName),
+                    userPic: m ? (m.pic || LEFT_MEMBER_AVATAR) : (isLeftFallback ? LEFT_MEMBER_AVATAR : String(c.userPic || LEFT_MEMBER_AVATAR)),
                     content: isDel ? '' : String(c.content || ''),
                     replyTo: rNum,
                     deleted: isDel ? 'Y' : '',
@@ -390,8 +395,8 @@ window.PortalHistory = (function() {
                 const isDeleted = c.deleted === 'Y';
                 const isMine = Boolean(uidLower && c.userId && c.userId.toLowerCase() === uidLower);
                 const isEditing = !isDeleted && isMine && st.editingFloor === c.floor;
-                const safePic = escapeHtml(c.userPic || 'https://imgur.com/786FxAA.jpg');
-                const safeName = escapeHtml(c.userName || '群友');
+                const safePic = escapeHtml(c.userPic || LEFT_MEMBER_AVATAR);
+                const safeName = escapeHtml(c.userName || LEFT_MEMBER_NAME);
 
                 const replyBadgeHtml = c.replyTo
                     ? `<button type="button" class="gh-reply-ref" onclick="PortalHistory.scrollToCommentFloor('${prefix}', ${c.replyTo})">↳ 回覆 #${c.replyTo}</button>`

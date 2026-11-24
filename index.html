@@ -26,920 +26,972 @@
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
 <body>
-    <a class="skip-link" href="#mainContent">跳至主要內容</a>
+<a class="skip-link" href="#mainContent">跳至主要內容</a>
 
-    <!-- LINE 登入閘道（無訪客模式：無法登入僅顯示提示訊息與登入按鈕） -->
-    <div id="authGate" class="auth-gate" role="dialog" aria-modal="true" aria-labelledby="authGateTitle">
-        <div class="auth-gate__card">
-            <div class="auth-gate__logo">
-                <img class="brand-logo-img" src="https://obs.line-scdn.net/0hTp0LmYC8C18NNRtkYlJ0CF1oAD0-VxVULwEfOChdVgh7VjpTMi8tWiheVmYjfhN1OQMbSSlOCg8obj5iMTIhTnJlHgxgVjVudjgPRmlJIB98VSkIdw/f256x256" alt="L&gt;S 社群 Logo" referrerpolicy="no-referrer" onerror="this.replaceWith(document.createTextNode('L>S'))">
-            </div>
-            <div id="authGateChecking" class="auth-gate__checking">
-                <div class="spinner" aria-hidden="true"></div>
-                <p class="auth-gate__desc">正在驗證 LINE 登入狀態...</p>
-            </div>
-            <div id="authGateBlocked" class="auth-gate__blocked" hidden>
-                <h1 id="authGateTitle" class="auth-gate__title">請登入 LINE 以繼續</h1>
-                <p id="authGateMsg" class="auth-gate__desc">無法自動完成 LINE 登入，本社群入口僅限群組成員透過 LINE 身分驗證存取。</p>
-                <div class="auth-gate__actions">
-                    <button type="button" id="authGateLoginBtn" class="btn btn--primary btn--full" onclick="PortalAuth.triggerLogin()">🔑 登入 LINE</button>
-                </div>
+<!-- LINE 登入閘道（無訪客模式：無法登入僅顯示提示訊息與登入按鈕） -->
+<div id="authGate" class="auth-gate" role="dialog" aria-modal="true" aria-labelledby="authGateTitle">
+    <div class="auth-gate__card">
+        <div class="auth-gate__logo">
+            <img class="brand-logo-img" src="https://obs.line-scdn.net/0hTp0LmYC8C18NNRtkYlJ0CF1oAD0-VxVULwEfOChdVgh7VjpTMi8tWiheVmYjfhN1OQMbSSlOCg8obj5iMTIhTnJlHgxgVjVudjgPRmlJIB98VSkIdw/f256x256" alt="L&gt;S 社群 Logo" referrerpolicy="no-referrer" onerror="this.replaceWith(document.createTextNode('L>S'))">
+        </div>
+        <div id="authGateChecking" class="auth-gate__checking">
+            <div class="spinner" aria-hidden="true"></div>
+            <p class="auth-gate__desc">正在驗證 LINE 登入狀態...</p>
+        </div>
+        <div id="authGateBlocked" class="auth-gate__blocked" hidden>
+            <h1 id="authGateTitle" class="auth-gate__title">請登入 LINE 以繼續</h1>
+            <p id="authGateMsg" class="auth-gate__desc">無法自動完成 LINE 登入，本社群入口僅限群組成員透過 LINE 身分驗證存取。</p>
+            <div class="auth-gate__actions">
+                <button type="button" id="authGateLoginBtn" class="btn btn--primary btn--full" onclick="PortalAuth.triggerLogin()">🔑 登入 LINE</button>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- 固定頂部導覽列 (taste-skill: 實色背景 + 1px 底線 + 等邊界 .wrap) -->
-    <header class="nav" role="banner">
-        <div class="wrap nav__inner">
-            <div class="nav__left">
-                <a href="#groups" class="brand-mark" onclick="PortalApp.switchTab('groups'); return false;" aria-label="L>S 社群首頁">
+<!-- 固定頂部導覽列 (taste-skill: 實色背景 + 1px 底線 + 等邊界 .wrap) -->
+<header class="nav" role="banner">
+    <div class="wrap nav__inner">
+        <div class="nav__left">
+            <a href="#groups" class="brand-mark" onclick="PortalApp.switchTab('groups'); return false;" aria-label="L>S 社群首頁">
                     <span class="brand-tile">
                         <img class="brand-logo-img" src="https://obs.line-scdn.net/0hTp0LmYC8C18NNRtkYlJ0CF1oAD0-VxVULwEfOChdVgh7VjpTMi8tWiheVmYjfhN1OQMbSSlOCg8obj5iMTIhTnJlHgxgVjVudjgPRmlJIB98VSkIdw/f256x256" alt="L&gt;S 社群 Logo" referrerpolicy="no-referrer" onerror="this.replaceWith(document.createTextNode('L>S'))">
                     </span>
-                    <span class="brand-text">
+                <span class="brand-text">
                         <span class="brand-name">L&gt;S 社群</span>
                         <span class="brand-sub" id="navLiveSummary">載入社群資料中</span>
                     </span>
-                </a>
+            </a>
+        </div>
+
+        <nav class="nav__tabs tabs" id="desktopNavTabs" aria-label="主要功能導覽">
+            <button type="button" class="nav__tab tab" data-tab="groups" aria-current="page" onclick="PortalApp.switchTab('groups')">
+                <span>揪團大廳</span>
+            </button>
+            <button type="button" class="nav__tab tab" data-tab="members" onclick="PortalApp.switchTab('members')">
+                <span>群友名單</span>
+            </button>
+            <button type="button" class="nav__tab tab" data-tab="groupHistory" onclick="PortalApp.switchTab('groupHistory')">
+                <span>揪團大事記</span>
+            </button>
+            <button type="button" class="nav__tab tab" data-tab="leftHistory" onclick="PortalApp.switchTab('leftHistory')">
+                <span>退群紀錄</span>
+            </button>
+            <button type="button" class="nav__tab tab" data-tab="other" onclick="PortalApp.switchTab('other')">
+                <span>其他</span>
+            </button>
+        </nav>
+
+        <div class="nav__right">
+            <button type="button" class="btn btn--primary nav__create-btn" onclick="PortalGroupForm.openCreate()">
+                <span aria-hidden="true">＋</span>
+                <span>發起揪團</span>
+            </button>
+            <button type="button" id="portalAuthBtn" class="auth-pill" onclick="PortalAuth.handleAuthClick()" title="我的個人數位名片">
+                <span class="auth-dot" aria-hidden="true"></span>
+                <span id="portalAuthLabel">驗證中</span>
+            </button>
+        </div>
+    </div>
+</header>
+
+<main id="mainContent" class="portal-main">
+    <!-- ================================================================
+         TAB 1 (首頁優先): 揪團大廳 + 橫向 3D 旋轉點唱機
+         ================================================================ -->
+    <section id="view-groups" class="portal-view is-active" aria-labelledby="groupsViewTitle">
+        <div class="wrap">
+            <div class="section-head">
+                <div class="section-head__titles">
+                    <div class="eyebrow-row">
+                        <span class="eyebrow-tag">ACTIVE MEETUPS</span>
+                        <span class="mono count-pill" id="groupsCountPill">同步中</span>
+                    </div>
+                    <h1 id="groupsViewTitle" class="page-h1">揪團大廳 <span class="muted">選一張卡片，出發見面。</span></h1>
+                </div>
+                <div class="section-head__actions">
+                    <button type="button" class="btn btn--secondary btn--compact" onclick="PortalJukebox.refresh(true)" aria-label="重新整理揪團清單">
+                        <span>↻ 重新整理</span>
+                    </button>
+                    <button type="button" class="btn btn--primary mobile-only-create" onclick="PortalGroupForm.openCreate()">
+                        <span>＋ 發起揪團</span>
+                    </button>
+                </div>
             </div>
 
-            <nav class="nav__tabs tabs" id="desktopNavTabs" aria-label="主要功能導覽">
-                <button type="button" class="nav__tab tab" data-tab="groups" aria-current="page" onclick="PortalApp.switchTab('groups')">
-                    <span>揪團大廳</span>
-                </button>
-                <button type="button" class="nav__tab tab" data-tab="members" onclick="PortalApp.switchTab('members')">
-                    <span>群友名單</span>
-                </button>
-                <button type="button" class="nav__tab tab" data-tab="groupHistory" onclick="PortalApp.switchTab('groupHistory')">
-                    <span>揪團大事記</span>
-                </button>
-                <button type="button" class="nav__tab tab" data-tab="leftHistory" onclick="PortalApp.switchTab('leftHistory')">
-                    <span>退群紀錄</span>
-                </button>
-                <button type="button" class="nav__tab tab" data-tab="other" onclick="PortalApp.switchTab('other')">
-                    <span>其他</span>
-                </button>
-            </nav>
+            <!-- 篩選列與搜尋列 (含滑動指示器) -->
+            <div class="jukebox-toolbar">
+                <div class="jukebox-toolbar-left">
+                    <div class="input-wrap jukebox-search-wrap">
+                        <span class="input-icon" aria-hidden="true">🔍</span>
+                        <input type="text" inputmode="search" enterkeyhint="search" id="jukeboxSearchInput" class="field-input" placeholder="搜尋揪團標題、內文或地點" autocomplete="off" aria-label="搜尋揪團標題、內文或地點">
+                        <button type="button" id="clearJukeboxSearchBtn" class="btn-clear-field" onclick="PortalJukebox.clearSearch()" aria-label="清除搜尋">✕</button>
+                    </div>
+                    <div class="filter-tabs tabs" id="jukeboxFilterTabs" role="tablist" aria-label="揪團篩選條件">
+                        <button type="button" class="filter-tab tab is-active" data-filter="all" role="tab" aria-selected="true" onclick="PortalJukebox.setFilter('all')">全部揪團</button>
+                        <button type="button" class="filter-tab tab" data-filter="joined" role="tab" aria-selected="false" onclick="PortalJukebox.setFilter('joined')">我已參加</button>
+                        <button type="button" class="filter-tab tab" data-filter="hosting" role="tab" aria-selected="false" onclick="PortalJukebox.setFilter('hosting')">我主揪</button>
+                        <button type="button" class="filter-tab tab" data-filter="available" role="tab" aria-selected="false" onclick="PortalJukebox.setFilter('available')">尚有名額</button>
+                    </div>
+                </div>
+                <div class="jukebox-hint">
+                    <span class="mono" id="jukeboxTrackReadout">TRACK 00 / 00</span>
+                    <span class="hint-sep" aria-hidden="true">·</span>
+                    <span>左右拖曳或點選選曲軌道切換</span>
+                </div>
+            </div>
 
-            <div class="nav__right">
-                <button type="button" class="btn btn--primary nav__create-btn" onclick="PortalGroupForm.openCreate()">
-                    <span aria-hidden="true">＋</span>
-                    <span>發起揪團</span>
-                </button>
-                <button type="button" id="portalAuthBtn" class="auth-pill" onclick="PortalAuth.handleAuthClick()" title="我的個人數位名片">
-                    <span class="auth-dot" aria-hidden="true"></span>
-                    <span id="portalAuthLabel">驗證中</span>
-                </button>
+            <!-- 點唱機載入骨架 -->
+            <div id="jukeboxLoading" class="jukebox-loading-box" aria-live="polite">
+                <div class="jukebox-skeleton-stage">
+                    <div class="sk-card sk-card--side"></div>
+                    <div class="sk-card sk-card--center">
+                        <div class="sk-line sk-w40"></div>
+                        <div class="sk-line sk-w80 sk-lg"></div>
+                        <div class="sk-line sk-w60"></div>
+                        <div class="sk-line sk-w100 sk-block"></div>
+                        <div class="sk-line sk-w100 sk-btn"></div>
+                    </div>
+                    <div class="sk-card sk-card--side"></div>
+                </div>
+                <p class="loading-caption">正在從試算表同步進行中揪團...</p>
+            </div>
+
+            <!-- 橫向 3D 點唱機舞台 -->
+            <div id="jukeboxShell" class="jukebox-shell" style="display: none;">
+                <div class="jukebox-stage" id="jukeboxStage" tabindex="0" aria-roledescription="carousel" aria-label="進行中揪團旋轉點唱機">
+                    <div class="jukebox-stage-chrome" aria-hidden="true">
+                        <span class="stage-chrome-dot">LIVE SYNC</span>
+                    </div>
+                    <!-- 建築感同心圓弧刻度裝飾線 -->
+                    <svg class="jukebox-arc-bg" viewBox="0 0 1200 220" preserveAspectRatio="none" aria-hidden="true">
+                        <path d="M 40 205 Q 600 85 1160 205" fill="none" stroke="currentColor" stroke-width="1" />
+                        <path d="M 150 215 Q 600 122 1050 215" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="4 6" />
+                    </svg>
+                    <div class="jukebox-track" id="jukeboxTrack"></div>
+                </div>
+
+                <!-- 點唱機選曲控制盤 -->
+                <div class="jukebox-deck">
+                    <button type="button" class="deck-step-btn" id="jukeboxPrevBtn" onclick="PortalJukebox.step(-1)" aria-label="上一張揪團卡片">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+                    </button>
+
+                    <div class="deck-rail" id="jukeboxDialRail" role="tablist" aria-label="點唱機選曲軌道"></div>
+
+                    <button type="button" class="deck-step-btn" id="jukeboxNextBtn" onclick="PortalJukebox.step(1)" aria-label="下一張揪團卡片">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 空狀態 / 錯誤狀態 -->
+            <div id="jukeboxEmpty" class="empty-panel" style="display: none;"></div>
+        </div>
+    </section>
+
+    <!-- ================================================================
+         TAB 2 (第二重要): 群友名單與數位名片
+         ================================================================ -->
+    <section id="view-members" class="portal-view" aria-labelledby="membersViewTitle" hidden>
+        <div class="wrap">
+            <div class="section-head">
+                <div class="section-head__titles">
+                    <div class="eyebrow-row">
+                        <span class="eyebrow-tag">COMMUNITY DIRECTORY</span>
+                        <span class="mono count-pill" id="membersCountPill">載入中</span>
+                    </div>
+                    <h1 id="membersViewTitle" class="page-h1">群友名單 <span class="muted">點擊頭像打開數位名片。</span></h1>
+                </div>
+                <div class="section-head__actions" id="membersHeaderSelfAction"></div>
+            </div>
+
+            <div class="directory-controls">
+                <div class="input-wrap">
+                    <span class="input-icon" aria-hidden="true">🔍</span>
+                    <input type="text" inputmode="search" enterkeyhint="search" id="memberSearchInput" class="field-input" placeholder="搜尋暱稱、地點、職業、稱號" autocomplete="off" aria-label="搜尋群友">
+                    <button type="button" id="clearMemberSearchBtn" class="btn-clear-field" onclick="PortalMembers.clearSearch()" aria-label="清除搜尋">✕</button>
+                </div>
+
+                <div class="filter-tabs tabs" id="memberQuickFilters" role="tablist" aria-label="群友分類與排行">
+                    <button type="button" class="filter-tab tab is-active" data-mfilter="all" onclick="PortalMembers.setQuickFilter('all')">全部群友</button>
+                    <button type="button" class="filter-tab tab" data-mfilter="birthday" onclick="PortalMembers.setQuickFilter('birthday')">本月壽星</button>
+                    <button type="button" class="filter-tab tab" data-mfilter="active" onclick="PortalMembers.setQuickFilter('active')">本月活躍</button>
+                    <button type="button" class="filter-tab tab" data-mfilter="unsend" onclick="PortalMembers.setQuickFilter('unsend')">收回排行</button>
+                    <button type="button" class="filter-tab tab" data-mfilter="host" onclick="PortalMembers.setQuickFilter('host')">揪團排行</button>
+                    <button type="button" class="filter-tab tab" data-mfilter="join" onclick="PortalMembers.setQuickFilter('join')">參團排行</button>
+                    <button type="button" class="filter-tab tab" data-mfilter="msg" onclick="PortalMembers.setQuickFilter('msg')">發言排行</button>
+                </div>
+            </div>
+
+            <div id="membersLoading" class="loading-inline">
+                <div class="spinner"></div>
+                <span>正在載入群友名冊與稱號設定...</span>
+            </div>
+
+            <div class="member-directory-grid" id="memberDirectoryGrid"></div>
+        </div>
+    </section>
+
+    <!-- ================================================================
+         TAB 3: 揪團大事記
+         ================================================================ -->
+    <section id="view-groupHistory" class="portal-view" aria-labelledby="ghViewTitle" hidden>
+        <div class="wrap">
+            <div class="section-head">
+                <div class="section-head__titles">
+                    <div class="eyebrow-row">
+                        <span class="eyebrow-tag">ARCHIVE · GROUPS HISTORY</span>
+                        <span class="mono count-pill" id="ghCountPill">待載入</span>
+                    </div>
+                    <h1 id="ghViewTitle" class="page-h1">揪團大事記 <span class="muted">回顧每次相聚的紀錄。</span></h1>
+                </div>
+                <div class="section-head__actions">
+                    <button type="button" id="ghDesktopToggleBtn" class="btn btn--secondary btn--compact desktop-only-btn is-active" onclick="PortalHistory.toggleDesktopSplit()">雙欄閱覽</button>
+                    <div class="segmented-switch" role="group" aria-label="大事記顯示模式">
+                        <button type="button" class="seg-btn is-active" data-gh-view="card" onclick="PortalHistory.setGhViewMode('card')">卡片</button>
+                        <button type="button" class="seg-btn" data-gh-view="compact" onclick="PortalHistory.setGhViewMode('compact')">列表</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-panel">
+                <div class="search-grid-2">
+                    <div class="input-wrap">
+                        <span class="input-icon" aria-hidden="true">🔍</span>
+                        <input type="text" inputmode="search" enterkeyhint="search" id="ghKeywordInput" class="field-input" placeholder="搜尋標題或內文關鍵字" autocomplete="off" aria-label="搜尋標題或內文關鍵字">
+                        <button type="button" id="ghClearKeywordBtn" class="btn-clear-field" aria-label="清除關鍵字">✕</button>
+                    </div>
+                    <div class="input-wrap">
+                        <span class="input-icon" aria-hidden="true">👤</span>
+                        <input type="text" inputmode="search" enterkeyhint="search" id="ghMemberInput" class="field-input" placeholder="依群友暱稱篩選活動" autocomplete="off" aria-label="篩選群友">
+                        <button type="button" id="ghClearMemberBtn" class="btn-clear-field" aria-label="清除群友篩選">✕</button>
+                    </div>
+                </div>
+
+                <div id="ghScopeRow" class="scope-bar" style="display: none;">
+                    <span class="scope-label">參與角色：</span>
+                    <button type="button" class="chip-btn is-active" data-gh-scope="all">全部 (含主揪)</button>
+                    <button type="button" class="chip-btn" data-gh-scope="joiner">僅參加者</button>
+                    <button type="button" class="chip-btn" data-gh-scope="host">僅主揪</button>
+                </div>
+
+                <div class="filter-bar-row">
+                    <div class="chips-group">
+                        <button type="button" class="chip-btn is-active" data-gh-status="all">全部狀態</button>
+                        <button type="button" class="chip-btn" data-gh-status="圓滿結束">圓滿結束</button>
+                        <button type="button" class="chip-btn" data-gh-status="提前關團">提前關團</button>
+                        <button type="button" class="chip-btn" id="ghSortToggleBtn">最新 ▾</button>
+                    </div>
+                    <button type="button" id="ghResetFiltersBtn" class="btn-text-reset" style="display: none;" onclick="PortalHistory.resetGhFilters()">清除篩選 ✕</button>
+                </div>
+            </div>
+
+            <div class="gh-workspace" id="ghWorkspace">
+                <div class="gh-list-pane">
+                    <div id="ghLoading" class="loading-inline" style="display: none;">
+                        <div class="spinner"></div>
+                        <span>正在載入揪團大事記...</span>
+                    </div>
+                    <div id="ghList"></div>
+                    <div id="ghFooter" class="list-footer"></div>
+                </div>
+
+                <aside id="ghDesktopPane" class="gh-detail-pane" aria-label="揪團大事記詳情窗格">
+                    <div id="ghPaneEmpty" class="pane-empty-box">
+                        <div class="empty-emoji">📖</div>
+                        <div class="empty-title">選擇左側揪團檢視詳情</div>
+                        <div class="empty-desc">支援鍵盤 ↑ / ↓ 快速切換紀錄</div>
+                    </div>
+                    <div id="ghPaneBodyWrap" style="display: none;">
+                        <div class="pane-top-bar">
+                            <div class="pane-meta-left">
+                                <span id="ghPaneTime" class="mono meta-pill"></span>
+                                <span id="ghPaneStatus" class="status-pill"></span>
+                            </div>
+                            <span class="mono pane-kbd">↑ ↓ 切換</span>
+                        </div>
+                        <div id="ghPaneBody" class="pane-scroll-body">
+                            <h2 id="ghPaneTitle" class="detail-h2"></h2>
+                            <div class="kv-box">
+                                <div class="kv-row kv-row--time"><span class="kv-k">活動時間</span><span id="ghPaneActivityTime" class="kv-v kv-v--time mono"></span></div>
+                                <div class="kv-row" id="ghPaneHostDateRow"><span class="kv-k">發起日期</span><span id="ghPaneHostDate" class="kv-v mono"></span></div>
+                            </div>
+                            <div id="ghPaneLocCard" class="loc-mini-card" style="display: none;">
+                                <div>
+                                    <div class="loc-mini-name">📍 <span id="ghPaneLocName"></span></div>
+                                    <div id="ghPaneLocAddr" class="loc-mini-addr"></div>
+                                </div>
+                                <a id="ghPaneMapBtn" href="#" target="_blank" rel="noopener noreferrer" class="btn btn--secondary btn--compact">地圖 ↗</a>
+                            </div>
+                            <div class="detail-block">
+                                <div class="detail-label">📝 活動內容</div>
+                                <div id="ghPaneContent" class="detail-prose"></div>
+                            </div>
+                            <div class="detail-block">
+                                <div class="detail-label-row">
+                                    <span class="detail-label" id="ghPaneJoinerCount">👥 參與名單</span>
+                                    <span class="detail-sub-hint">點擊名字篩選該群友</span>
+                                </div>
+                                <div id="ghPaneMemberChips" class="history-chips-wrap"></div>
+                            </div>
+                            <div class="detail-block gh-comments-block" id="ghPaneCommentsBlock"></div>
+                        </div>
+                    </div>
+                </aside>
             </div>
         </div>
-    </header>
+    </section>
 
-    <main id="mainContent" class="portal-main">
-        <!-- ================================================================
-             TAB 1 (首頁優先): 揪團大廳 + 橫向 3D 旋轉點唱機
-             ================================================================ -->
-        <section id="view-groups" class="portal-view is-active" aria-labelledby="groupsViewTitle">
-            <div class="wrap">
-                <div class="section-head">
-                    <div class="section-head__titles">
-                        <div class="eyebrow-row">
-                            <span class="eyebrow-tag">ACTIVE MEETUPS</span>
-                            <span class="mono count-pill" id="groupsCountPill">同步中</span>
-                        </div>
-                        <h1 id="groupsViewTitle" class="page-h1">揪團大廳 <span class="muted">選一張卡片，出發見面。</span></h1>
+    <!-- ================================================================
+         TAB 4: 退群紀錄
+         ================================================================ -->
+    <section id="view-leftHistory" class="portal-view" aria-labelledby="lhViewTitle" hidden>
+        <div class="wrap">
+            <div class="section-head">
+                <div class="section-head__titles">
+                    <div class="eyebrow-row">
+                        <span class="eyebrow-tag">ARCHIVE · LEFT MEMBERS</span>
+                        <span class="mono count-pill" id="lhCountPill">待載入</span>
                     </div>
-                    <div class="section-head__actions">
-                        <button type="button" class="btn btn--secondary btn--compact" onclick="PortalJukebox.refresh(true)" aria-label="重新整理揪團清單">
-                            <span>↻ 重新整理</span>
-                        </button>
-                        <button type="button" class="btn btn--primary mobile-only-create" onclick="PortalGroupForm.openCreate()">
-                            <span>＋ 發起揪團</span>
-                        </button>
+                    <h1 id="lhViewTitle" class="page-h1">退群紀錄 <span class="muted">曾走過這段社群的朋友。</span></h1>
+                </div>
+                <div class="section-head__actions">
+                    <div class="segmented-switch" role="group" aria-label="退群紀錄顯示模式">
+                        <button type="button" class="seg-btn is-active" data-lh-view="card" onclick="PortalHistory.setLhViewMode('card')">卡片</button>
+                        <button type="button" class="seg-btn" data-lh-view="compact" onclick="PortalHistory.setLhViewMode('compact')">列表</button>
                     </div>
                 </div>
-
-                <!-- 篩選列與搜尋列 (含滑動指示器) -->
-                <div class="jukebox-toolbar">
-                    <div class="jukebox-toolbar-left">
-                        <div class="input-wrap jukebox-search-wrap">
-                            <span class="input-icon" aria-hidden="true">🔍</span>
-                            <input type="text" inputmode="search" enterkeyhint="search" id="jukeboxSearchInput" class="field-input" placeholder="搜尋揪團標題、內文或地點" autocomplete="off" aria-label="搜尋揪團標題、內文或地點">
-                            <button type="button" id="clearJukeboxSearchBtn" class="btn-clear-field" onclick="PortalJukebox.clearSearch()" aria-label="清除搜尋">✕</button>
-                        </div>
-                        <div class="filter-tabs tabs" id="jukeboxFilterTabs" role="tablist" aria-label="揪團篩選條件">
-                            <button type="button" class="filter-tab tab is-active" data-filter="all" role="tab" aria-selected="true" onclick="PortalJukebox.setFilter('all')">全部揪團</button>
-                            <button type="button" class="filter-tab tab" data-filter="joined" role="tab" aria-selected="false" onclick="PortalJukebox.setFilter('joined')">我已參加</button>
-                            <button type="button" class="filter-tab tab" data-filter="hosting" role="tab" aria-selected="false" onclick="PortalJukebox.setFilter('hosting')">我主揪</button>
-                            <button type="button" class="filter-tab tab" data-filter="available" role="tab" aria-selected="false" onclick="PortalJukebox.setFilter('available')">尚有名額</button>
-                        </div>
-                    </div>
-                    <div class="jukebox-hint">
-                        <span class="mono" id="jukeboxTrackReadout">TRACK 00 / 00</span>
-                        <span class="hint-sep" aria-hidden="true">·</span>
-                        <span>左右拖曳或點選選曲軌道切換</span>
-                    </div>
-                </div>
-
-                <!-- 點唱機載入骨架 -->
-                <div id="jukeboxLoading" class="jukebox-loading-box" aria-live="polite">
-                    <div class="jukebox-skeleton-stage">
-                        <div class="sk-card sk-card--side"></div>
-                        <div class="sk-card sk-card--center">
-                            <div class="sk-line sk-w40"></div>
-                            <div class="sk-line sk-w80 sk-lg"></div>
-                            <div class="sk-line sk-w60"></div>
-                            <div class="sk-line sk-w100 sk-block"></div>
-                            <div class="sk-line sk-w100 sk-btn"></div>
-                        </div>
-                        <div class="sk-card sk-card--side"></div>
-                    </div>
-                    <p class="loading-caption">正在從試算表同步進行中揪團...</p>
-                </div>
-
-                <!-- 橫向 3D 點唱機舞台 -->
-                <div id="jukeboxShell" class="jukebox-shell" style="display: none;">
-                    <div class="jukebox-stage" id="jukeboxStage" tabindex="0" aria-roledescription="carousel" aria-label="進行中揪團旋轉點唱機">
-                        <div class="jukebox-stage-chrome" aria-hidden="true">
-                            <span class="stage-chrome-dot">LIVE SYNC</span>
-                        </div>
-                        <!-- 建築感同心圓弧刻度裝飾線 -->
-                        <svg class="jukebox-arc-bg" viewBox="0 0 1200 220" preserveAspectRatio="none" aria-hidden="true">
-                            <path d="M 40 205 Q 600 85 1160 205" fill="none" stroke="currentColor" stroke-width="1" />
-                            <path d="M 150 215 Q 600 122 1050 215" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="4 6" />
-                        </svg>
-                        <div class="jukebox-track" id="jukeboxTrack"></div>
-                    </div>
-
-                    <!-- 點唱機選曲控制盤 -->
-                    <div class="jukebox-deck">
-                        <button type="button" class="deck-step-btn" id="jukeboxPrevBtn" onclick="PortalJukebox.step(-1)" aria-label="上一張揪團卡片">
-                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
-                        </button>
-
-                        <div class="deck-rail" id="jukeboxDialRail" role="tablist" aria-label="點唱機選曲軌道"></div>
-
-                        <button type="button" class="deck-step-btn" id="jukeboxNextBtn" onclick="PortalJukebox.step(1)" aria-label="下一張揪團卡片">
-                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- 空狀態 / 錯誤狀態 -->
-                <div id="jukeboxEmpty" class="empty-panel" style="display: none;"></div>
             </div>
-        </section>
 
-        <!-- ================================================================
-             TAB 2 (第二重要): 群友名單與數位名片
-             ================================================================ -->
-        <section id="view-members" class="portal-view" aria-labelledby="membersViewTitle" hidden>
-            <div class="wrap">
-                <div class="section-head">
-                    <div class="section-head__titles">
-                        <div class="eyebrow-row">
-                            <span class="eyebrow-tag">COMMUNITY DIRECTORY</span>
-                            <span class="mono count-pill" id="membersCountPill">載入中</span>
-                        </div>
-                        <h1 id="membersViewTitle" class="page-h1">群友名單 <span class="muted">點擊頭像打開數位名片。</span></h1>
-                    </div>
-                    <div class="section-head__actions" id="membersHeaderSelfAction"></div>
+            <div class="control-panel">
+                <div class="input-wrap">
+                    <span class="input-icon" aria-hidden="true">🔍</span>
+                    <input type="text" inputmode="search" enterkeyhint="search" id="lhSearchInput" class="field-input" placeholder="搜尋離群群友暱稱..." autocomplete="off" aria-label="搜尋離群群友暱稱">
+                    <button type="button" id="lhClearSearchBtn" class="btn-clear-field" aria-label="清除搜尋">✕</button>
                 </div>
-
-                <div class="directory-controls">
-                    <div class="input-wrap">
-                        <span class="input-icon" aria-hidden="true">🔍</span>
-                        <input type="text" inputmode="search" enterkeyhint="search" id="memberSearchInput" class="field-input" placeholder="搜尋暱稱、地點、職業、稱號" autocomplete="off" aria-label="搜尋群友">
-                        <button type="button" id="clearMemberSearchBtn" class="btn-clear-field" onclick="PortalMembers.clearSearch()" aria-label="清除搜尋">✕</button>
-                    </div>
-
-                    <div class="filter-tabs tabs" id="memberQuickFilters" role="tablist" aria-label="群友分類與排行">
-                        <button type="button" class="filter-tab tab is-active" data-mfilter="all" onclick="PortalMembers.setQuickFilter('all')">全部群友</button>
-                        <button type="button" class="filter-tab tab" data-mfilter="birthday" onclick="PortalMembers.setQuickFilter('birthday')">本月壽星</button>
-                        <button type="button" class="filter-tab tab" data-mfilter="active" onclick="PortalMembers.setQuickFilter('active')">本月活躍</button>
-                        <button type="button" class="filter-tab tab" data-mfilter="unsend" onclick="PortalMembers.setQuickFilter('unsend')">收回排行</button>
-                        <button type="button" class="filter-tab tab" data-mfilter="host" onclick="PortalMembers.setQuickFilter('host')">揪團排行</button>
-                        <button type="button" class="filter-tab tab" data-mfilter="join" onclick="PortalMembers.setQuickFilter('join')">參團排行</button>
-                        <button type="button" class="filter-tab tab" data-mfilter="msg" onclick="PortalMembers.setQuickFilter('msg')">發言排行</button>
+                <div class="filter-bar-row">
+                    <div class="chips-group">
+                        <button type="button" class="chip-btn is-active" data-lh-sort="newest">最新離群</button>
+                        <button type="button" class="chip-btn" data-lh-sort="oldest">最早離群</button>
+                        <button type="button" class="chip-btn" data-lh-sort="mostMsgs">發言最多</button>
                     </div>
                 </div>
+            </div>
 
-                <div id="membersLoading" class="loading-inline">
+            <div id="lhLoading" class="loading-inline" style="display: none;">
+                <div class="spinner"></div>
+                <span>正在載入退群紀錄...</span>
+            </div>
+            <div id="lhList"></div>
+            <div id="lhFooter" class="list-footer"></div>
+        </div>
+    </section>
+
+    <!-- ================================================================
+         TAB 5: 其他（每日訊息圖表、群規請假、機器人咒語小抄）
+         ================================================================ -->
+    <section id="view-other" class="portal-view" aria-labelledby="otherViewTitle" hidden>
+        <div class="wrap">
+            <div class="section-head">
+                <div class="section-head__titles">
+                    <div class="eyebrow-row">
+                        <span class="eyebrow-tag">COMMUNITY RESOURCES · MORE</span>
+                        <span class="mono count-pill">熱度圖表 · 表單 · 咒語小抄</span>
+                    </div>
+                    <h1 id="otherViewTitle" class="page-h1">其他 <span class="muted">群組熱度趨勢、常用表單與機器人咒語。</span></h1>
+                </div>
+            </div>
+
+            <!-- 1. 每日群聊熱度互動圖表 -->
+            <div class="other-toolbox-card">
+                <div class="other-toolbox-head">
+                    <div>
+                        <span class="mono other-eyebrow">DAILY ACTIVITY · 群聊趨勢</span>
+                        <h2 class="other-section-title">📈 每日群組訊息熱度</h2>
+                    </div>
+                    <div class="chips-group" id="otherChartRanges" role="group" aria-label="圖表時間區間">
+                        <button type="button" class="chip-btn is-active" data-range="30">近 30 日</button>
+                        <button type="button" class="chip-btn" data-range="90">近 90 日</button>
+                        <button type="button" class="chip-btn" data-range="365">近 1 年</button>
+                        <button type="button" class="chip-btn" data-range="0">全部</button>
+                    </div>
+                </div>
+                <div id="otherChartKpis" class="other-kpi-grid"></div>
+                <div id="otherChartLoading" class="loading-inline" style="display: none;">
                     <div class="spinner"></div>
-                    <span>正在載入群友名冊與稱號設定...</span>
+                    <span>正在載入每日訊息趨勢...</span>
                 </div>
-
-                <div class="member-directory-grid" id="memberDirectoryGrid"></div>
+                <div id="otherChartWrap"></div>
             </div>
-        </section>
 
-        <!-- ================================================================
-             TAB 3: 揪團大事記
-             ================================================================ -->
-        <section id="view-groupHistory" class="portal-view" aria-labelledby="ghViewTitle" hidden>
-            <div class="wrap">
-                <div class="section-head">
-                    <div class="section-head__titles">
-                        <div class="eyebrow-row">
-                            <span class="eyebrow-tag">ARCHIVE · GROUPS HISTORY</span>
-                            <span class="mono count-pill" id="ghCountPill">待載入</span>
+            <!-- 2. 群規連結與請假表單 + 即時版規摘要 -->
+            <div class="other-links-grid">
+                <a href="https://reurl.cc/LWEO0L" target="_blank" rel="noopener noreferrer" class="other-resource-card is-rules" onclick="PortalApi.openExternalUrl(event, this.href)">
+                    <div class="other-card-top">
+                        <div class="other-icon-tile" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                                <path d="M9 12l2 2 4-4"/>
+                            </svg>
                         </div>
-                        <h1 id="ghViewTitle" class="page-h1">揪團大事記 <span class="muted">回顧每次相聚的紀錄。</span></h1>
+                        <span class="mono other-eyebrow">GUIDELINES · 社群公約</span>
                     </div>
-                    <div class="section-head__actions">
-                        <button type="button" id="ghDesktopToggleBtn" class="btn btn--secondary btn--compact desktop-only-btn is-active" onclick="PortalHistory.toggleDesktopSplit()">雙欄閱覽</button>
-                        <div class="segmented-switch" role="group" aria-label="大事記顯示模式">
-                            <button type="button" class="seg-btn is-active" data-gh-view="card" onclick="PortalHistory.setGhViewMode('card')">卡片</button>
-                            <button type="button" class="seg-btn" data-gh-view="compact" onclick="PortalHistory.setGhViewMode('compact')">列表</button>
-                        </div>
+                    <div class="other-card-body">
+                        <h2 class="other-card-title">L&gt;S 社群群規與公約</h2>
+                        <p class="other-card-desc">查閱群組相處準則、揪團安全注意事項、活動禮儀與退群／違規規範，讓每位夥伴都能自在安心互動。</p>
                     </div>
-                </div>
-
-                <div class="control-panel">
-                    <div class="search-grid-2">
-                        <div class="input-wrap">
-                            <span class="input-icon" aria-hidden="true">🔍</span>
-                            <input type="text" inputmode="search" enterkeyhint="search" id="ghKeywordInput" class="field-input" placeholder="搜尋標題或內文關鍵字" autocomplete="off" aria-label="搜尋標題或內文關鍵字">
-                            <button type="button" id="ghClearKeywordBtn" class="btn-clear-field" aria-label="清除關鍵字">✕</button>
-                        </div>
-                        <div class="input-wrap">
-                            <span class="input-icon" aria-hidden="true">👤</span>
-                            <input type="text" inputmode="search" enterkeyhint="search" id="ghMemberInput" class="field-input" placeholder="依群友暱稱篩選活動" autocomplete="off" aria-label="篩選群友">
-                            <button type="button" id="ghClearMemberBtn" class="btn-clear-field" aria-label="清除群友篩選">✕</button>
-                        </div>
-                    </div>
-
-                    <div id="ghScopeRow" class="scope-bar" style="display: none;">
-                        <span class="scope-label">參與角色：</span>
-                        <button type="button" class="chip-btn is-active" data-gh-scope="all">全部 (含主揪)</button>
-                        <button type="button" class="chip-btn" data-gh-scope="joiner">僅參加者</button>
-                        <button type="button" class="chip-btn" data-gh-scope="host">僅主揪</button>
-                    </div>
-
-                    <div class="filter-bar-row">
-                        <div class="chips-group">
-                            <button type="button" class="chip-btn is-active" data-gh-status="all">全部狀態</button>
-                            <button type="button" class="chip-btn" data-gh-status="圓滿結束">圓滿結束</button>
-                            <button type="button" class="chip-btn" data-gh-status="提前關團">提前關團</button>
-                            <button type="button" class="chip-btn" id="ghSortToggleBtn">最新 ▾</button>
-                        </div>
-                        <button type="button" id="ghResetFiltersBtn" class="btn-text-reset" style="display: none;" onclick="PortalHistory.resetGhFilters()">清除篩選 ✕</button>
-                    </div>
-                </div>
-
-                <div class="gh-workspace" id="ghWorkspace">
-                    <div class="gh-list-pane">
-                        <div id="ghLoading" class="loading-inline" style="display: none;">
-                            <div class="spinner"></div>
-                            <span>正在載入揪團大事記...</span>
-                        </div>
-                        <div id="ghList"></div>
-                        <div id="ghFooter" class="list-footer"></div>
-                    </div>
-
-                    <aside id="ghDesktopPane" class="gh-detail-pane" aria-label="揪團大事記詳情窗格">
-                        <div id="ghPaneEmpty" class="pane-empty-box">
-                            <div class="empty-emoji">📖</div>
-                            <div class="empty-title">選擇左側揪團檢視詳情</div>
-                            <div class="empty-desc">支援鍵盤 ↑ / ↓ 快速切換紀錄</div>
-                        </div>
-                        <div id="ghPaneBodyWrap" style="display: none;">
-                            <div class="pane-top-bar">
-                                <div class="pane-meta-left">
-                                    <span id="ghPaneTime" class="mono meta-pill"></span>
-                                    <span id="ghPaneStatus" class="status-pill"></span>
-                                </div>
-                                <span class="mono pane-kbd">↑ ↓ 切換</span>
-                            </div>
-                            <div id="ghPaneBody" class="pane-scroll-body">
-                                <h2 id="ghPaneTitle" class="detail-h2"></h2>
-                                <div class="kv-box">
-                                    <div class="kv-row kv-row--time"><span class="kv-k">活動時間</span><span id="ghPaneActivityTime" class="kv-v kv-v--time mono"></span></div>
-                                    <div class="kv-row" id="ghPaneHostDateRow"><span class="kv-k">發起日期</span><span id="ghPaneHostDate" class="kv-v mono"></span></div>
-                                </div>
-                                <div id="ghPaneLocCard" class="loc-mini-card" style="display: none;">
-                                    <div>
-                                        <div class="loc-mini-name">📍 <span id="ghPaneLocName"></span></div>
-                                        <div id="ghPaneLocAddr" class="loc-mini-addr"></div>
-                                    </div>
-                                    <a id="ghPaneMapBtn" href="#" target="_blank" rel="noopener noreferrer" class="btn btn--secondary btn--compact">地圖 ↗</a>
-                                </div>
-                                <div class="detail-block">
-                                    <div class="detail-label">📝 活動內容</div>
-                                    <div id="ghPaneContent" class="detail-prose"></div>
-                                </div>
-                                <div class="detail-block">
-                                    <div class="detail-label-row">
-                                        <span class="detail-label" id="ghPaneJoinerCount">👥 參與名單</span>
-                                        <span class="detail-sub-hint">點擊名字篩選該群友</span>
-                                    </div>
-                                    <div id="ghPaneMemberChips" class="history-chips-wrap"></div>
-                                </div>
-                                <div class="detail-block gh-comments-block" id="ghPaneCommentsBlock"></div>
-                            </div>
-                        </div>
-                    </aside>
-                </div>
-            </div>
-        </section>
-
-        <!-- ================================================================
-             TAB 4: 退群紀錄
-             ================================================================ -->
-        <section id="view-leftHistory" class="portal-view" aria-labelledby="lhViewTitle" hidden>
-            <div class="wrap">
-                <div class="section-head">
-                    <div class="section-head__titles">
-                        <div class="eyebrow-row">
-                            <span class="eyebrow-tag">ARCHIVE · LEFT MEMBERS</span>
-                            <span class="mono count-pill" id="lhCountPill">待載入</span>
-                        </div>
-                        <h1 id="lhViewTitle" class="page-h1">退群紀錄 <span class="muted">曾走過這段社群的朋友。</span></h1>
-                    </div>
-                    <div class="section-head__actions">
-                        <div class="segmented-switch" role="group" aria-label="退群紀錄顯示模式">
-                            <button type="button" class="seg-btn is-active" data-lh-view="card" onclick="PortalHistory.setLhViewMode('card')">卡片</button>
-                            <button type="button" class="seg-btn" data-lh-view="compact" onclick="PortalHistory.setLhViewMode('compact')">列表</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="control-panel">
-                    <div class="input-wrap">
-                        <span class="input-icon" aria-hidden="true">🔍</span>
-                        <input type="text" inputmode="search" enterkeyhint="search" id="lhSearchInput" class="field-input" placeholder="搜尋離群群友暱稱..." autocomplete="off" aria-label="搜尋離群群友暱稱">
-                        <button type="button" id="lhClearSearchBtn" class="btn-clear-field" aria-label="清除搜尋">✕</button>
-                    </div>
-                    <div class="filter-bar-row">
-                        <div class="chips-group">
-                            <button type="button" class="chip-btn is-active" data-lh-sort="newest">最新離群</button>
-                            <button type="button" class="chip-btn" data-lh-sort="oldest">最早離群</button>
-                            <button type="button" class="chip-btn" data-lh-sort="mostMsgs">發言最多</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="lhLoading" class="loading-inline" style="display: none;">
-                    <div class="spinner"></div>
-                    <span>正在載入退群紀錄...</span>
-                </div>
-                <div id="lhList"></div>
-                <div id="lhFooter" class="list-footer"></div>
-            </div>
-        </section>
-
-        <!-- ================================================================
-             TAB 5: 其他（群規、請假外部連結）
-             ================================================================ -->
-        <section id="view-other" class="portal-view" aria-labelledby="otherViewTitle" hidden>
-            <div class="wrap">
-                <div class="section-head">
-                    <div class="section-head__titles">
-                        <div class="eyebrow-row">
-                            <span class="eyebrow-tag">COMMUNITY RESOURCES · MORE</span>
-                            <span class="mono count-pill">常用表單與規範</span>
-                        </div>
-                        <h1 id="otherViewTitle" class="page-h1">其他資源 <span class="muted">群組規範與日常申請通道。</span></h1>
-                    </div>
-                </div>
-
-                <div class="other-links-grid">
-                    <a href="https://reurl.cc/LWEO0L" target="_blank" rel="noopener noreferrer" class="other-resource-card is-rules" onclick="PortalApi.openExternalUrl(event, this.href)">
-                        <div class="other-card-top">
-                            <div class="other-icon-tile" aria-hidden="true">
-                                <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                                    <path d="M9 12l2 2 4-4"/>
-                                </svg>
-                            </div>
-                            <span class="mono other-eyebrow">GUIDELINES · 社群公約</span>
-                        </div>
-                        <div class="other-card-body">
-                            <h2 class="other-card-title">L&gt;S 社群群規與公約</h2>
-                            <p class="other-card-desc">查閱群組相處準則、揪團安全注意事項、活動禮儀與退群／違規規範，讓每位夥伴都能自在安心互動。</p>
-                        </div>
-                        <div class="other-card-foot">
-                            <span class="mono other-url-pill">reurl.cc/LWEO0L</span>
-                            <span class="other-cta-pill">
+                    <div class="other-card-foot">
+                        <span class="mono other-url-pill">reurl.cc/LWEO0L</span>
+                        <span class="other-cta-pill">
                                 <span>閱讀群規</span>
                                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
                             </span>
-                        </div>
-                    </a>
+                    </div>
+                </a>
 
-                    <a href="https://forms.gle/EfBKT7GMyt1hq1ZT6" target="_blank" rel="noopener noreferrer" class="other-resource-card is-leave" onclick="PortalApi.openExternalUrl(event, this.href)">
-                        <div class="other-card-top">
-                            <div class="other-icon-tile" aria-hidden="true">
-                                <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                                    <rect x="3" y="4" width="18" height="18" rx="2"/>
-                                    <line x1="16" y1="2" x2="16" y2="6"/>
-                                    <line x1="8" y1="2" x2="8" y2="6"/>
-                                    <line x1="3" y1="10" x2="21" y2="10"/>
-                                    <path d="M9 16l2 2 4-4"/>
-                                </svg>
-                            </div>
-                            <span class="mono other-eyebrow">LEAVE FORM · 請假回報</span>
+                <a href="https://forms.gle/EfBKT7GMyt1hq1ZT6" target="_blank" rel="noopener noreferrer" class="other-resource-card is-leave" onclick="PortalApi.openExternalUrl(event, this.href)">
+                    <div class="other-card-top">
+                        <div class="other-icon-tile" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="4" width="18" height="18" rx="2"/>
+                                <line x1="16" y1="2" x2="16" y2="6"/>
+                                <line x1="8" y1="2" x2="8" y2="6"/>
+                                <line x1="3" y1="10" x2="21" y2="10"/>
+                                <path d="M9 16l2 2 4-4"/>
+                            </svg>
                         </div>
-                        <div class="other-card-body">
-                            <h2 class="other-card-title">社群請假登記表單</h2>
-                            <p class="other-card-desc">近期因工作忙碌、出國旅行或私人安排需要暫時潛水或休假時，可先透過 Google 表單快速向管理群報備。</p>
-                        </div>
-                        <div class="other-card-foot">
-                            <span class="mono other-url-pill">forms.gle/EfBKT7...</span>
-                            <span class="other-cta-pill">
+                        <span class="mono other-eyebrow">LEAVE FORM · 請假回報</span>
+                    </div>
+                    <div class="other-card-body">
+                        <h2 class="other-card-title">社群請假登記表單</h2>
+                        <p class="other-card-desc">近期因工作忙碌、出國旅行或私人安排需要暫時潛水或休假時，可先透過 Google 表單快速向管理群報備。</p>
+                    </div>
+                    <div class="other-card-foot">
+                        <span class="mono other-url-pill">forms.gle/EfBKT7...</span>
+                        <span class="other-cta-pill">
                                 <span>前往填寫表單</span>
                                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
                             </span>
-                        </div>
-                    </a>
-                </div>
-            </div>
-        </section>
-    </main>
-
-    <!-- 手機版底部固定導覽列 -->
-    <nav class="mobile-dock" aria-label="手機功能導覽">
-        <button type="button" class="dock-item is-active" data-tab="groups" onclick="PortalApp.switchTab('groups')">
-            <span class="dock-icon" aria-hidden="true">🎪</span>
-            <span class="dock-label">揪團</span>
-        </button>
-        <button type="button" class="dock-item" data-tab="members" onclick="PortalApp.switchTab('members')">
-            <span class="dock-icon" aria-hidden="true">👥</span>
-            <span class="dock-label">群友</span>
-        </button>
-        <button type="button" class="dock-item" data-tab="groupHistory" onclick="PortalApp.switchTab('groupHistory')">
-            <span class="dock-icon" aria-hidden="true">📜</span>
-            <span class="dock-label">大事記</span>
-        </button>
-        <button type="button" class="dock-item" data-tab="leftHistory" onclick="PortalApp.switchTab('leftHistory')">
-            <span class="dock-icon" aria-hidden="true">🚪</span>
-            <span class="dock-label">退群紀錄</span>
-        </button>
-        <button type="button" class="dock-item" data-tab="other" onclick="PortalApp.switchTab('other')">
-            <span class="dock-icon" aria-hidden="true">📌</span>
-            <span class="dock-label">其他</span>
-        </button>
-    </nav>
-
-    <!-- ================================================================
-         MODAL 1: 揪團完整詳情抽屜 / 視窗
-         ================================================================ -->
-    <div id="groupDetailOverlay" class="drawer-overlay" onclick="PortalGroupDetail.handleOverlayClick(event)">
-        <div class="drawer-panel detail-drawer" role="dialog" aria-modal="true" aria-labelledby="gdTitle">
-            <div id="gdLoadingOverlay" class="gd-loading-overlay" role="status" aria-label="載入中" hidden>
-                <div class="gd-ls-loader" aria-hidden="true">
-                    <span class="gd-ls-word">L&gt;S</span><span class="gd-ls-dots"><span class="gd-ls-dot">.</span><span class="gd-ls-dot">.</span><span class="gd-ls-dot">.</span></span>
-                </div>
-            </div>
-            <div class="drawer-header">
-                <div class="drawer-header__meta">
-                    <span class="status-pill" id="gdStatusBadge">進行中</span>
-                </div>
-                <button type="button" id="gdCloseBtn" class="icon-close-btn" onclick="PortalGroupDetail.close()" aria-label="關閉詳情">✕</button>
-            </div>
-
-            <div class="drawer-body" id="gdBodyScroll">
-                <div class="gd-hero-block">
-                    <div class="mono gd-date-line" id="gdDate"></div>
-                    <h2 class="gd-title" id="gdTitle">載入中...</h2>
-                    <div class="gd-host-row" id="gdHostRow"></div>
-                </div>
-
-                <!-- 地點與 Leaflet 地圖預覽 -->
-                <div id="gdLocationCard" class="gd-location-box" style="display: none;">
-                    <div class="gd-location-head">
-                        <div class="gd-location-info">
-                            <div class="gd-location-name">📍 <span id="gdLocName"></span></div>
-                            <div class="gd-location-addr" id="gdLocAddr" style="display: none;"></div>
-                        </div>
-                        <a id="gdLocMapLink" href="#" target="_blank" rel="noopener noreferrer" class="btn btn--secondary btn--compact" onclick="PortalApi.openExternalUrl(event, this.href)">開啟地圖 ↗</a>
                     </div>
-                    <div class="gd-map-frame" id="gdMapContainer" onclick="PortalGroupDetail.openLocationMap()" title="點擊在 Google 地圖中開啟">
-                        <div id="gdMapView"></div>
-                        <div class="gd-map-badge">🗺️ 點擊開啟 Google 地圖</div>
-                    </div>
-                </div>
-
-                <!-- 活動內容 -->
-                <div class="gd-section">
-                    <div class="gd-section-label">📝 活動說明</div>
-                    <div class="gd-content-prose" id="gdContent"></div>
-                </div>
-
-                <!-- 雙日曆按鈕 -->
-                <div class="gd-calendar-row">
-                    <a id="gdGoogleCalBtn" href="#" class="btn btn--secondary" onclick="PortalGroupDetail.handleGoogleCalClick(event)">📅 加入 Google 日曆</a>
-                    <a id="gdIcalBtn" href="#" class="btn btn--secondary" onclick="PortalGroupDetail.handleIcalClick(event)">🍏 加入 Apple 日曆</a>
-                </div>
-
-                <!-- 報名 / 備註 / 主揪管理區 -->
-                <div class="gd-action-box">
-                    <div class="gd-action-head">
-                        <span class="gd-section-label" style="margin:0;">🙋‍♂️ 報名與管理</span>
-                        <span id="gdAuthTag" class="mono auth-mini-tag">未登入</span>
-                    </div>
-
-                    <!-- 成員操作區 -->
-                    <div id="gdMemberActions" style="display: none;">
-                        <!-- 主揪專屬控制區：編輯 + 結束揪團 -->
-                        <div id="gdHostControls" class="gd-host-box" style="display: none;">
-                            <div class="gd-host-info">
-                                <span class="gd-host-crown">👑</span>
-                                <div>
-                                    <div class="gd-host-title">您是本活動主揪</div>
-                                    <div class="gd-host-sub">可直接修改活動資訊，或提前結束並歸檔至大事記</div>
-                                </div>
-                            </div>
-                            <div class="gd-host-btns">
-                                <button type="button" class="btn btn--secondary btn--compact" onclick="PortalGroupDetail.handleEditGroup()">✏️ 修改揪團</button>
-                                <button type="button" class="btn btn--danger btn--compact" onclick="PortalGroupDetail.handleCloseGroup()">🛑 結束揪團</button>
-                            </div>
-                        </div>
-
-                        <div class="gd-note-group">
-                            <label for="gdActionNote" class="gd-note-label">活動備註（選填，例如：開車+1、晚到半小時）</label>
-                            <input type="text" id="gdActionNote" class="field-input" maxlength="50" placeholder="請輸入備註文字...">
-                        </div>
-                        <div class="gd-action-btns" id="gdActionBtnRow"></div>
-                    </div>
-                </div>
-
-                <!-- 參加者名單 -->
-                <div class="gd-section">
-                    <div class="gd-joined-head">
-                        <div class="gd-section-label" style="margin:0;">
-                            參加者 <span class="mono count-pill" id="gdCountDisplay">0 / 0</span>
-                        </div>
-                        <button type="button" class="btn btn--secondary btn--compact" onclick="PortalGroupDetail.openTagModal()">@ 標記全員</button>
-                    </div>
-                    <div class="gd-member-grid" id="gdJoinedList"></div>
-                </div>
-
-                <!-- 候補名單 -->
-                <div class="gd-section" id="gdWaitlistSection" style="display: none;">
-                    <div class="gd-joined-head">
-                        <div class="gd-section-label" style="margin:0;">
-                            ⏳ 候補名單 <span class="mono count-pill is-wait" id="gdWaitlistCountDisplay">0 人</span>
-                        </div>
-                    </div>
-                    <div class="gd-member-grid" id="gdWaitlistList"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ================================================================
-         MODAL 2: 開團 / 編輯揪團抽屜
-         ================================================================ -->
-    <div id="groupFormOverlay" class="drawer-overlay" onclick="if(event.target===this) PortalGroupForm.close()">
-        <div class="drawer-panel form-drawer" role="dialog" aria-modal="true" aria-labelledby="gfHeading">
-            <div class="drawer-header">
-                <div class="drawer-header__meta">
-                    <span class="seq-tag" id="gfModePill">✨ 新增活動</span>
-                    <span class="mono host-chip-inline" id="gfHostChip">主揪：載入中</span>
-                </div>
-                <button type="button" class="icon-close-btn" onclick="PortalGroupForm.close()" aria-label="關閉表單">✕</button>
+                </a>
             </div>
 
-            <div class="drawer-body" id="gfBodyScroll">
-                <div id="gfLoadingBox" class="loading-inline" style="display: none;">
-                    <div class="spinner"></div>
-                    <span id="gfLoadingText">驗證群組身分與載入資料中...</span>
-                </div>
-
-                <div id="gfStateView" class="gf-state-box" style="display: none;">
-                    <div class="empty-emoji" id="gfStateIcon">🔑</div>
-                    <h3 class="gf-state-title" id="gfStateTitle">請先登入 LINE</h3>
-                    <p class="gf-state-desc" id="gfStateDesc"></p>
-                    <div class="gf-state-actions" id="gfStateActions"></div>
-                </div>
-
-                <form id="gfForm" style="display: none;" onsubmit="return false;">
-                    <input type="hidden" id="gfSeqId" value="">
-                    <input type="hidden" id="gfHost" value="">
-
-                    <h2 id="gfHeading" class="gd-title" style="margin-bottom: 18px;">建立揪團</h2>
-
-                    <div class="gf-grid">
-                        <div class="gf-col-main">
-                            <div class="form-section-box">
-                                <h3 class="form-section-title">📝 活動基本資訊</h3>
-                                <div class="form-field">
-                                    <label for="gfGroupTitle">揪團標題 <span class="req">*</span></label>
-                                    <input type="text" id="gfGroupTitle" class="field-input" placeholder="例如：週五微醺小聚 / 歡樂羽球團" maxlength="60">
-                                </div>
-                                <div class="form-field">
-                                    <label for="gfGroupContent">揪團內容 <span class="req">*</span></label>
-                                    <textarea id="gfGroupContent" class="field-textarea" rows="5" placeholder="寫下活動細節、集合方式、預計費用或注意事項..."></textarea>
-                                </div>
-                            </div>
-
-                            <div class="form-section-box">
-                                <h3 class="form-section-title">📅 時間與地點</h3>
-                                <div class="gf-date-grid">
-                                    <div class="form-field">
-                                        <label for="gfStartDate">開始時間 <span class="req">*</span></label>
-                                        <input type="text" id="gfStartDate" class="field-input" placeholder="點擊選擇開始時間" readonly>
-                                    </div>
-                                    <div class="form-field">
-                                        <label for="gfEndDate">結束時間 <span class="req">*</span></label>
-                                        <input type="text" id="gfEndDate" class="field-input" placeholder="點擊選擇結束時間" readonly>
-                                    </div>
-                                </div>
-                                <div class="quick-dur-row">
-                                    <span class="quick-dur-label">⏱️ 快速累加結束時間：</span>
-                                    <div class="quick-dur-chips">
-                                        <button type="button" class="chip-btn" onclick="PortalGroupForm.addQuickDuration(15)">+15分</button>
-                                        <button type="button" class="chip-btn" onclick="PortalGroupForm.addQuickDuration(30)">+30分</button>
-                                        <button type="button" class="chip-btn" onclick="PortalGroupForm.addQuickDuration(60)">+1小時</button>
-                                        <button type="button" class="chip-btn" onclick="PortalGroupForm.addQuickDuration(120)">+2小時</button>
-                                        <button type="button" class="chip-btn" onclick="PortalGroupForm.addQuickDuration(180)">+3小時</button>
-                                    </div>
-                                </div>
-
-                                <div class="form-field" style="margin-top: 14px;">
-                                    <label for="gfLocationInput">活動地點（選填）</label>
-                                    <div class="gf-loc-wrap" id="gfLocContainer">
-                                        <input type="text" id="gfLocationInput" class="field-input" placeholder="搜尋地名（如：大安運動中心）" autocomplete="off">
-                                        <span id="gfLocationLoading" class="gf-loc-tag" style="display: none;">搜尋中...</span>
-                                        <div id="gfAutocompleteDropdown" class="gf-autocomplete-list" style="display: none;"></div>
-                                    </div>
-                                    <input type="hidden" id="gfLocationData" value="">
-                                    <div id="gfLocationPreview" class="gf-loc-preview" style="display: none;">
-                                        <div class="gf-loc-preview-text">
-                                            <div class="gf-loc-preview-name">📍 <span id="gfPreviewLocName"></span></div>
-                                            <div id="gfPreviewLocAddr" class="gf-loc-preview-addr" style="display: none;"></div>
-                                        </div>
-                                        <div class="gf-loc-preview-actions">
-                                            <a id="gfPreviewLocLink" href="#" target="_blank" rel="noopener noreferrer" onclick="PortalApi.openExternalUrl(event, this.href)" class="btn btn--secondary btn--compact">地圖 ↗</a>
-                                            <button type="button" class="btn btn--danger btn--compact" onclick="PortalGroupForm.clearLocation()">清除</button>
-                                        </div>
-                                    </div>
-                                    <p class="field-hint">💡 輸入關鍵字並點選清單項目即可自動帶入地圖座標。</p>
-                                </div>
-                            </div>
-
-                            <div class="form-section-box">
-                                <h3 class="form-section-title">⚙️ 提醒與人數設定</h3>
-                                <div class="slider-field">
-                                    <div class="slider-head">
-                                        <label for="gfRemindSlider">活動前提醒</label>
-                                        <span id="gfRemindBadge" class="mono count-pill">不提醒 (關閉)</span>
-                                    </div>
-                                    <input type="range" id="gfRemindSlider" min="0" max="24" step="0.5" value="0" class="custom-range">
-                                    <input type="hidden" id="gfRemindHours" value="">
-                                    <div class="slider-ticks mono"><span>關閉</span><span>6h</span><span>12h</span><span>18h</span><span>24h</span></div>
-                                </div>
-                                <div class="slider-field" style="margin-top: 16px;">
-                                    <div class="slider-head">
-                                        <label for="gfLimitSlider">人數限制</label>
-                                        <span id="gfLimitBadge" class="mono count-pill">無限制</span>
-                                    </div>
-                                    <input type="range" id="gfLimitSlider" min="0" max="75" step="1" value="0" class="custom-range">
-                                    <input type="hidden" id="gfLimit" value="99">
-                                    <div class="slider-ticks mono"><span>無限制</span><span>25人</span><span>50人</span><span>75人</span></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="gf-col-side">
-                            <div class="form-section-box">
-                                <div class="gf-member-head">
-                                    <label id="gfMemberLabel" style="margin:0;">👥 內建成員</label>
-                                    <span class="mono count-pill" id="gfMemberCountBadge">已選 0 人</span>
-                                </div>
-                                <div class="gf-member-toolbar">
-                                    <div class="input-wrap" style="flex:1;">
-                                        <span class="input-icon" aria-hidden="true">🔍</span>
-                                        <input type="text" inputmode="search" enterkeyhint="search" id="gfMemberSearchInput" class="field-input" placeholder="搜尋群友名稱..." autocomplete="off">
-                                        <button type="button" id="gfMemberSearchClear" class="btn-clear-field" onclick="PortalGroupForm.clearMemberSearch()" aria-label="清除搜尋">✕</button>
-                                    </div>
-                                    <button type="button" id="gfOnlySelectedBtn" class="chip-btn" onclick="PortalGroupForm.toggleOnlySelected()">僅看已選</button>
-                                </div>
-                                <div id="gfInitMemberBlock" class="gf-member-grid"></div>
-                            </div>
-
-                            <div id="gfWaitlistBox" class="form-section-box gf-waitlist-box hidden">
-                                <div class="gf-member-head">
-                                    <label style="margin:0;">⏳ 目前候補名單</label>
-                                    <span class="mono count-pill gf-waitlist-count" id="gfWaitlistCountBadge">0 人候補</span>
-                                </div>
-                                <div id="gfWaitlistList" class="gf-waitlist-list"></div>
-                                <p class="field-hint">依照登記順位排列；若調高人數上限，系統會依序自動遞補並於群組通知。</p>
-                            </div>
-
-                            <div class="gf-submit-wrap">
-                                <button type="button" id="gfSubmitBtn" class="btn btn--primary btn--full" onclick="PortalGroupForm.submit(this)">送出建立揪團</button>
-                            </div>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- ================================================================
-         MODAL 3: 備註修改歷史 / 複製全員標記 / 歷史大事記手機抽屜
-         ================================================================ -->
-    <div id="noteHistoryOverlay" class="submodal-overlay" onclick="if(event.target===this) PortalGroupDetail.closeNoteHistory()">
-        <div class="submodal-panel" role="dialog" aria-modal="true" aria-labelledby="noteHistoryTitle">
-            <div class="submodal-head">
-                <h3 id="noteHistoryTitle" class="submodal-title">備註修改歷史</h3>
-                <button type="button" class="icon-close-btn" onclick="PortalGroupDetail.closeNoteHistory()" aria-label="關閉">✕</button>
-            </div>
-            <div id="noteHistoryList" class="note-history-list"></div>
-        </div>
-    </div>
-
-    <div id="tagModalOverlay" class="submodal-overlay" onclick="if(event.target===this) PortalGroupDetail.closeTagModal()">
-        <div class="submodal-panel" role="dialog" aria-modal="true" aria-labelledby="tagModalTitle">
-            <div class="submodal-head">
-                <h3 id="tagModalTitle" class="submodal-title">複製參加者標記</h3>
-                <button type="button" class="icon-close-btn" onclick="PortalGroupDetail.closeTagModal()" aria-label="關閉">✕</button>
-            </div>
-            <textarea id="tagTextarea" class="field-textarea mono" rows="4" readonly></textarea>
-            <div class="submodal-actions">
-                <button type="button" class="btn btn--secondary" onclick="PortalGroupDetail.closeTagModal()">關閉</button>
-                <button type="button" id="tagCopyBtn" class="btn btn--primary" onclick="PortalGroupDetail.copyTagText()">複製全員</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="ghSheetOverlay" class="drawer-overlay" onclick="if(event.target===this) PortalHistory.closeGhSheet()">
-        <div id="ghSheetPanel" class="drawer-panel detail-drawer" role="dialog" aria-modal="true" aria-labelledby="ghSheetTitle">
-            <div class="drawer-header">
-                <div class="drawer-header__meta">
-                    <span id="ghSheetTime" class="mono meta-pill"></span>
-                    <span id="ghSheetStatus" class="status-pill"></span>
-                </div>
-                <button type="button" class="icon-close-btn" onclick="PortalHistory.closeGhSheet()" aria-label="關閉詳情">✕</button>
-            </div>
-            <div id="ghSheetBody" class="drawer-body">
-                <h2 id="ghSheetTitle" class="detail-h2"></h2>
-                <div class="kv-box">
-                    <div class="kv-row kv-row--time"><span class="kv-k">活動時間</span><span id="ghSheetActivityTime" class="kv-v kv-v--time mono"></span></div>
-                    <div class="kv-row" id="ghSheetHostDateRow"><span class="kv-k">發起日期</span><span id="ghSheetHostDate" class="kv-v mono"></span></div>
-                </div>
-                <div id="ghSheetLocCard" class="loc-mini-card" style="display: none;">
+            <!-- 3. 機器人咒語小抄（抽自 ls-chatbot.js） -->
+            <div class="other-toolbox-card">
+                <div class="other-toolbox-head">
                     <div>
-                        <div class="loc-mini-name">📍 <span id="ghSheetLocName"></span></div>
-                        <div id="ghSheetLocAddr" class="loc-mini-addr"></div>
+                        <span class="mono other-eyebrow">BOT SPELLS · 機機咒語小抄</span>
+                        <h2 class="other-section-title">🤖 機器人咒語與用途一覽</h2>
                     </div>
-                    <a id="ghSheetMapBtn" href="#" target="_blank" rel="noopener noreferrer" class="btn btn--secondary btn--compact">地圖 ↗</a>
+                    <span class="mono count-pill" id="otherCmdCountPill">共 0 組咒語</span>
                 </div>
-                <div class="detail-block">
-                    <div class="detail-label">📝 活動內容</div>
-                    <div id="ghSheetContent" class="detail-prose"></div>
-                </div>
-                <div class="detail-block">
-                    <div class="detail-label-row">
-                        <span class="detail-label" id="ghSheetJoinerCount">👥 參與名單</span>
-                        <span class="detail-sub-hint">點擊名字篩選該群友</span>
+                <div class="other-cmd-controls">
+                    <div class="input-wrap">
+                        <span class="input-icon" aria-hidden="true">🔍</span>
+                        <input type="text" inputmode="search" enterkeyhint="search" id="otherCmdSearchInput" class="field-input" placeholder="搜尋咒語關鍵字或用途（如：長舌、氣象、揪團、召喚）" autocomplete="off" aria-label="搜尋機器人咒語">
+                        <button type="button" id="otherCmdClearBtn" class="btn-clear-field" aria-label="清除搜尋">✕</button>
                     </div>
-                    <div id="ghSheetMemberChips" class="member-chips-wrap history-chips-wrap"></div>
+                    <div class="chips-group" id="otherCmdCats" role="tablist" aria-label="機器人咒語分類">
+                        <button type="button" class="chip-btn is-active" data-cat="all">全部咒語</button>
+                        <button type="button" class="chip-btn" data-cat="group">🎪 揪團</button>
+                        <button type="button" class="chip-btn" data-cat="rank">🏆 排行戰績</button>
+                        <button type="button" class="chip-btn" data-cat="stats">📊 訊息量</button>
+                        <button type="button" class="chip-btn" data-cat="weather">✨ 星座氣象</button>
+                        <button type="button" class="chip-btn" data-cat="fun">🐾 召喚搜尋</button>
+                        <button type="button" class="chip-btn" data-cat="portal">📌 社群公告</button>
+                    </div>
                 </div>
-                <div class="detail-block gh-comments-block" id="ghSheetCommentsBlock"></div>
+                <div id="otherCommandsGrid" class="other-commands-grid"></div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<!-- 手機版底部固定導覽列 -->
+<nav class="mobile-dock" aria-label="手機功能導覽">
+    <button type="button" class="dock-item is-active" data-tab="groups" onclick="PortalApp.switchTab('groups')">
+        <span class="dock-icon" aria-hidden="true">🎪</span>
+        <span class="dock-label">揪團</span>
+    </button>
+    <button type="button" class="dock-item" data-tab="members" onclick="PortalApp.switchTab('members')">
+        <span class="dock-icon" aria-hidden="true">👥</span>
+        <span class="dock-label">群友</span>
+    </button>
+    <button type="button" class="dock-item" data-tab="groupHistory" onclick="PortalApp.switchTab('groupHistory')">
+        <span class="dock-icon" aria-hidden="true">📜</span>
+        <span class="dock-label">大事記</span>
+    </button>
+    <button type="button" class="dock-item" data-tab="leftHistory" onclick="PortalApp.switchTab('leftHistory')">
+        <span class="dock-icon" aria-hidden="true">🚪</span>
+        <span class="dock-label">退群紀錄</span>
+    </button>
+    <button type="button" class="dock-item" data-tab="other" onclick="PortalApp.switchTab('other')">
+        <span class="dock-icon" aria-hidden="true">📌</span>
+        <span class="dock-label">其他</span>
+    </button>
+</nav>
+
+<!-- ================================================================
+     MODAL 1: 揪團完整詳情抽屜 / 視窗
+     ================================================================ -->
+<div id="groupDetailOverlay" class="drawer-overlay" onclick="PortalGroupDetail.handleOverlayClick(event)">
+    <div class="drawer-panel detail-drawer" role="dialog" aria-modal="true" aria-labelledby="gdTitle">
+        <div id="gdLoadingOverlay" class="gd-loading-overlay" role="status" aria-label="載入中" hidden>
+            <div class="gd-ls-loader" aria-hidden="true">
+                <span class="gd-ls-word">L&gt;S</span><span class="gd-ls-dots"><span class="gd-ls-dot">.</span><span class="gd-ls-dot">.</span><span class="gd-ls-dot">.</span></span>
+            </div>
+        </div>
+        <div class="drawer-header">
+            <div class="drawer-header__meta">
+                <span class="status-pill" id="gdStatusBadge">進行中</span>
+            </div>
+            <button type="button" id="gdCloseBtn" class="icon-close-btn" onclick="PortalGroupDetail.close()" aria-label="關閉詳情">✕</button>
+        </div>
+
+        <div class="drawer-body" id="gdBodyScroll">
+            <div class="gd-hero-block">
+                <div class="mono gd-date-line" id="gdDate"></div>
+                <h2 class="gd-title" id="gdTitle">載入中...</h2>
+                <div class="gd-host-row" id="gdHostRow"></div>
+            </div>
+
+            <!-- 地點與 Leaflet 地圖預覽 -->
+            <div id="gdLocationCard" class="gd-location-box" style="display: none;">
+                <div class="gd-location-head">
+                    <div class="gd-location-info">
+                        <div class="gd-location-name">📍 <span id="gdLocName"></span></div>
+                        <div class="gd-location-addr" id="gdLocAddr" style="display: none;"></div>
+                    </div>
+                    <a id="gdLocMapLink" href="#" target="_blank" rel="noopener noreferrer" class="btn btn--secondary btn--compact" onclick="PortalApi.openExternalUrl(event, this.href)">開啟地圖 ↗</a>
+                </div>
+                <div class="gd-map-frame" id="gdMapContainer" onclick="PortalGroupDetail.openLocationMap()" title="點擊在 Google 地圖中開啟">
+                    <div id="gdMapView"></div>
+                    <div class="gd-map-badge">🗺️ 點擊開啟 Google 地圖</div>
+                </div>
+            </div>
+
+            <!-- 活動內容 -->
+            <div class="gd-section">
+                <div class="gd-section-label">📝 活動說明</div>
+                <div class="gd-content-prose" id="gdContent"></div>
+            </div>
+
+            <!-- 雙日曆按鈕 -->
+            <div class="gd-calendar-row">
+                <a id="gdGoogleCalBtn" href="#" class="btn btn--secondary" onclick="PortalGroupDetail.handleGoogleCalClick(event)">📅 加入 Google 日曆</a>
+                <a id="gdIcalBtn" href="#" class="btn btn--secondary" onclick="PortalGroupDetail.handleIcalClick(event)">🍏 加入 Apple 日曆</a>
+            </div>
+
+            <!-- 報名 / 備註 / 主揪管理區 -->
+            <div class="gd-action-box">
+                <div class="gd-action-head">
+                    <span class="gd-section-label" style="margin:0;">🙋‍♂️ 報名與管理</span>
+                    <span id="gdAuthTag" class="mono auth-mini-tag">未登入</span>
+                </div>
+
+                <!-- 成員操作區 -->
+                <div id="gdMemberActions" style="display: none;">
+                    <!-- 主揪專屬控制區：編輯 + 結束揪團 -->
+                    <div id="gdHostControls" class="gd-host-box" style="display: none;">
+                        <div class="gd-host-info">
+                            <span class="gd-host-crown">👑</span>
+                            <div>
+                                <div class="gd-host-title">您是本活動主揪</div>
+                                <div class="gd-host-sub">可直接修改活動資訊，或提前結束並歸檔至大事記</div>
+                            </div>
+                        </div>
+                        <div class="gd-host-btns">
+                            <button type="button" class="btn btn--secondary btn--compact" onclick="PortalGroupDetail.handleEditGroup()">✏️ 修改揪團</button>
+                            <button type="button" class="btn btn--danger btn--compact" onclick="PortalGroupDetail.handleCloseGroup()">🛑 結束揪團</button>
+                        </div>
+                    </div>
+
+                    <div class="gd-note-group">
+                        <label for="gdActionNote" class="gd-note-label">活動備註（選填，例如：開車+1、晚到半小時）</label>
+                        <input type="text" id="gdActionNote" class="field-input" maxlength="50" placeholder="請輸入備註文字...">
+                    </div>
+                    <div class="gd-action-btns" id="gdActionBtnRow"></div>
+                </div>
+            </div>
+
+            <!-- 參加者名單 -->
+            <div class="gd-section">
+                <div class="gd-joined-head">
+                    <div class="gd-section-label" style="margin:0;">
+                        參加者 <span class="mono count-pill" id="gdCountDisplay">0 / 0</span>
+                    </div>
+                    <button type="button" class="btn btn--secondary btn--compact" onclick="PortalGroupDetail.openTagModal()">@ 標記全員</button>
+                </div>
+                <div class="gd-member-grid" id="gdJoinedList"></div>
+            </div>
+
+            <!-- 候補名單 -->
+            <div class="gd-section" id="gdWaitlistSection" style="display: none;">
+                <div class="gd-joined-head">
+                    <div class="gd-section-label" style="margin:0;">
+                        ⏳ 候補名單 <span class="mono count-pill is-wait" id="gdWaitlistCountDisplay">0 人</span>
+                    </div>
+                </div>
+                <div class="gd-member-grid" id="gdWaitlistList"></div>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- ================================================================
-         MODAL 4: 全站共用個人數位名片 Modal + 編輯名片 Modal + 頭像放大 Lightbox
-         ================================================================ -->
-    <div id="profileModalOverlay" class="profile-overlay" onclick="if(event.target===this) PortalProfile.close()">
-        <div class="profile-card-modal" onclick="PortalProfile.handleCardClick(event)" role="dialog" aria-modal="true" aria-labelledby="cardName">
-            <div class="badge-tooltip" id="badgeTooltip" onclick="event.stopPropagation()">
-                <div class="badge-tooltip-head">
-                    <span class="badge-tooltip-title" id="badgeTooltipTitle">稱號名稱</span>
-                    <button type="button" class="badge-tooltip-x" onclick="PortalProfile.hideBadgeTooltip()" aria-label="關閉說明">✕</button>
-                </div>
-                <div class="badge-tooltip-desc" id="badgeTooltipDesc">來源說明...</div>
+<!-- ================================================================
+     MODAL 2: 開團 / 編輯揪團抽屜
+     ================================================================ -->
+<div id="groupFormOverlay" class="drawer-overlay" onclick="if(event.target===this) PortalGroupForm.close()">
+    <div class="drawer-panel form-drawer" role="dialog" aria-modal="true" aria-labelledby="gfHeading">
+        <div class="drawer-header">
+            <div class="drawer-header__meta">
+                <span class="seq-tag" id="gfModePill">✨ 新增活動</span>
+                <span class="mono host-chip-inline" id="gfHostChip">主揪：載入中</span>
+            </div>
+            <button type="button" class="icon-close-btn" onclick="PortalGroupForm.close()" aria-label="關閉表單">✕</button>
+        </div>
+
+        <div class="drawer-body" id="gfBodyScroll">
+            <div id="gfLoadingBox" class="loading-inline" style="display: none;">
+                <div class="spinner"></div>
+                <span id="gfLoadingText">驗證群組身分與載入資料中...</span>
             </div>
 
-            <div class="profile-modal-head">
-                <button type="button" class="profile-close-btn" onclick="PortalProfile.close()" aria-label="關閉名片">✕</button>
-                <img id="cardAvatar" class="profile-modal-avatar" src="https://imgur.com/786FxAA.jpg" alt="成員頭像" onclick="PortalProfile.showImgLightbox(this.src, this)" title="點擊放大頭像">
-                <div class="profile-modal-name" id="cardName">載入中...</div>
-                <div class="profile-modal-sub mono" id="cardJoinDays">已加入社群</div>
-                <div class="profile-social-links" id="cardSocialLinks"></div>
+            <div id="gfStateView" class="gf-state-box" style="display: none;">
+                <div class="empty-emoji" id="gfStateIcon">🔑</div>
+                <h3 class="gf-state-title" id="gfStateTitle">請先登入 LINE</h3>
+                <p class="gf-state-desc" id="gfStateDesc"></p>
+                <div class="gf-state-actions" id="gfStateActions"></div>
             </div>
 
-            <div class="profile-modal-body" id="profileModalBody">
-                <div id="selfEditArea" style="display: none;">
-                    <button type="button" class="btn btn--primary btn--full" onclick="PortalProfile.openEditModal()">✏️ 編輯我的個人名片</button>
-                </div>
-                <div id="guestEditHint" style="display: none; text-align: center;">
-                    <button type="button" class="btn btn--secondary btn--full" onclick="PortalAuth.triggerLogin()">🔑 使用 LINE 登入驗證以編輯本人名片</button>
-                </div>
+            <form id="gfForm" style="display: none;" onsubmit="return false;">
+                <input type="hidden" id="gfSeqId" value="">
+                <input type="hidden" id="gfHost" value="">
 
-                <div class="info-grid">
-                    <div class="info-cell"><span class="info-cell-title">🎂 年齡</span><span class="info-cell-val" id="cardAge">秘密 🤫</span></div>
-                    <div class="info-cell"><span class="info-cell-title">✨ 星座</span><span class="info-cell-val" id="cardZodiac">--</span></div>
-                    <div class="info-cell"><span class="info-cell-title">📍 居住地</span><span class="info-cell-val" id="cardResidence">--</span></div>
-                    <div class="info-cell"><span class="info-cell-title">💼 職業</span><span class="info-cell-val" id="cardOccupation">--</span></div>
-                    <div class="info-cell"><span class="info-cell-title">💖 感情狀態</span><span class="info-cell-val" id="cardRelationship">--</span></div>
-                    <div class="info-cell" id="cardJoinDateCell"><span class="info-cell-title">📅 入群日期</span><span class="info-cell-val mono" id="cardJoinDate">--</span></div>
-                    <div class="info-cell admin-bday-cell" id="cardBirthdayCell" style="display: none;" onclick="PortalProfile.openEditBirthdayDialog(event)" title="點擊設定生日與推播提醒">
-                        <span class="info-cell-title">🎂 生日 <span class="bday-remind-badge" id="cardBirthdayRemindBadge">🔕</span> <span class="admin-edit-tag">✎</span></span>
-                        <span class="info-cell-val mono" id="cardBirthday">未填寫</span>
+                <h2 id="gfHeading" class="gd-title" style="margin-bottom: 18px;">建立揪團</h2>
+
+                <div class="gf-grid">
+                    <div class="gf-col-main">
+                        <div class="form-section-box">
+                            <h3 class="form-section-title">📝 活動基本資訊</h3>
+                            <div class="form-field">
+                                <label for="gfGroupTitle">揪團標題 <span class="req">*</span></label>
+                                <input type="text" id="gfGroupTitle" class="field-input" placeholder="例如：週五微醺小聚 / 歡樂羽球團" maxlength="60">
+                            </div>
+                            <div class="form-field">
+                                <label for="gfGroupContent">揪團內容 <span class="req">*</span></label>
+                                <textarea id="gfGroupContent" class="field-textarea" rows="5" placeholder="寫下活動細節、集合方式、預計費用或注意事項..."></textarea>
+                            </div>
+                        </div>
+
+                        <div class="form-section-box">
+                            <h3 class="form-section-title">📅 時間與地點</h3>
+                            <div class="gf-date-grid">
+                                <div class="form-field">
+                                    <label for="gfStartDate">開始時間 <span class="req">*</span></label>
+                                    <input type="text" id="gfStartDate" class="field-input" placeholder="點擊選擇開始時間" readonly>
+                                </div>
+                                <div class="form-field">
+                                    <label for="gfEndDate">結束時間 <span class="req">*</span></label>
+                                    <input type="text" id="gfEndDate" class="field-input" placeholder="點擊選擇結束時間" readonly>
+                                </div>
+                            </div>
+                            <div class="quick-dur-row">
+                                <span class="quick-dur-label">⏱️ 快速累加結束時間：</span>
+                                <div class="quick-dur-chips">
+                                    <button type="button" class="chip-btn" onclick="PortalGroupForm.addQuickDuration(15)">+15分</button>
+                                    <button type="button" class="chip-btn" onclick="PortalGroupForm.addQuickDuration(30)">+30分</button>
+                                    <button type="button" class="chip-btn" onclick="PortalGroupForm.addQuickDuration(60)">+1小時</button>
+                                    <button type="button" class="chip-btn" onclick="PortalGroupForm.addQuickDuration(120)">+2小時</button>
+                                    <button type="button" class="chip-btn" onclick="PortalGroupForm.addQuickDuration(180)">+3小時</button>
+                                </div>
+                            </div>
+
+                            <div class="form-field" style="margin-top: 14px;">
+                                <label for="gfLocationInput">活動地點（選填）</label>
+                                <div class="gf-loc-wrap" id="gfLocContainer">
+                                    <input type="text" id="gfLocationInput" class="field-input" placeholder="搜尋地名（如：大安運動中心）" autocomplete="off">
+                                    <span id="gfLocationLoading" class="gf-loc-tag" style="display: none;">搜尋中...</span>
+                                    <div id="gfAutocompleteDropdown" class="gf-autocomplete-list" style="display: none;"></div>
+                                </div>
+                                <input type="hidden" id="gfLocationData" value="">
+                                <div id="gfLocationPreview" class="gf-loc-preview" style="display: none;">
+                                    <div class="gf-loc-preview-text">
+                                        <div class="gf-loc-preview-name">📍 <span id="gfPreviewLocName"></span></div>
+                                        <div id="gfPreviewLocAddr" class="gf-loc-preview-addr" style="display: none;"></div>
+                                    </div>
+                                    <div class="gf-loc-preview-actions">
+                                        <a id="gfPreviewLocLink" href="#" target="_blank" rel="noopener noreferrer" onclick="PortalApi.openExternalUrl(event, this.href)" class="btn btn--secondary btn--compact">地圖 ↗</a>
+                                        <button type="button" class="btn btn--danger btn--compact" onclick="PortalGroupForm.clearLocation()">清除</button>
+                                    </div>
+                                </div>
+                                <p class="field-hint">💡 輸入關鍵字並點選清單項目即可自動帶入地圖座標。</p>
+                            </div>
+                        </div>
+
+                        <div class="form-section-box">
+                            <h3 class="form-section-title">⚙️ 提醒與人數設定</h3>
+                            <div class="slider-field">
+                                <div class="slider-head">
+                                    <label for="gfRemindSlider">活動前提醒</label>
+                                    <span id="gfRemindBadge" class="mono count-pill">不提醒 (關閉)</span>
+                                </div>
+                                <input type="range" id="gfRemindSlider" min="0" max="24" step="0.5" value="0" class="custom-range">
+                                <input type="hidden" id="gfRemindHours" value="">
+                                <div class="slider-ticks mono"><span>關閉</span><span>6h</span><span>12h</span><span>18h</span><span>24h</span></div>
+                            </div>
+                            <div class="slider-field" style="margin-top: 16px;">
+                                <div class="slider-head">
+                                    <label for="gfLimitSlider">人數限制</label>
+                                    <span id="gfLimitBadge" class="mono count-pill">無限制</span>
+                                </div>
+                                <input type="range" id="gfLimitSlider" min="0" max="75" step="1" value="0" class="custom-range">
+                                <input type="hidden" id="gfLimit" value="99">
+                                <div class="slider-ticks mono"><span>無限制</span><span>25人</span><span>50人</span><span>75人</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="gf-col-side">
+                        <div class="form-section-box">
+                            <div class="gf-member-head">
+                                <label id="gfMemberLabel" style="margin:0;">👥 內建成員</label>
+                                <span class="mono count-pill" id="gfMemberCountBadge">已選 0 人</span>
+                            </div>
+                            <div class="gf-member-toolbar">
+                                <div class="input-wrap" style="flex:1;">
+                                    <span class="input-icon" aria-hidden="true">🔍</span>
+                                    <input type="text" inputmode="search" enterkeyhint="search" id="gfMemberSearchInput" class="field-input" placeholder="搜尋群友名稱..." autocomplete="off">
+                                    <button type="button" id="gfMemberSearchClear" class="btn-clear-field" onclick="PortalGroupForm.clearMemberSearch()" aria-label="清除搜尋">✕</button>
+                                </div>
+                                <button type="button" id="gfOnlySelectedBtn" class="chip-btn" onclick="PortalGroupForm.toggleOnlySelected()">僅看已選</button>
+                            </div>
+                            <div id="gfInitMemberBlock" class="gf-member-grid"></div>
+                        </div>
+
+                        <div id="gfWaitlistBox" class="form-section-box gf-waitlist-box hidden">
+                            <div class="gf-member-head">
+                                <label style="margin:0;">⏳ 目前候補名單</label>
+                                <span class="mono count-pill gf-waitlist-count" id="gfWaitlistCountBadge">0 人候補</span>
+                            </div>
+                            <div id="gfWaitlistList" class="gf-waitlist-list"></div>
+                            <p class="field-hint">依照登記順位排列；若調高人數上限，系統會依序自動遞補並於群組通知。</p>
+                        </div>
+
+                        <div class="gf-submit-wrap">
+                            <button type="button" id="gfSubmitBtn" class="btn btn--primary btn--full" onclick="PortalGroupForm.submit(this)">送出建立揪團</button>
+                        </div>
                     </div>
                 </div>
+            </form>
+        </div>
+    </div>
+</div>
 
-                <div class="profile-section">
-                    <div class="profile-section-lbl">📝 自我介紹</div>
-                    <div class="bio-box" id="cardBio">載入自介中...</div>
+<!-- ================================================================
+     MODAL 3: 備註修改歷史 / 複製全員標記 / 歷史大事記手機抽屜
+     ================================================================ -->
+<div id="noteHistoryOverlay" class="submodal-overlay" onclick="if(event.target===this) PortalGroupDetail.closeNoteHistory()">
+    <div class="submodal-panel" role="dialog" aria-modal="true" aria-labelledby="noteHistoryTitle">
+        <div class="submodal-head">
+            <h3 id="noteHistoryTitle" class="submodal-title">備註修改歷史</h3>
+            <button type="button" class="icon-close-btn" onclick="PortalGroupDetail.closeNoteHistory()" aria-label="關閉">✕</button>
+        </div>
+        <div id="noteHistoryList" class="note-history-list"></div>
+    </div>
+</div>
+
+<div id="tagModalOverlay" class="submodal-overlay" onclick="if(event.target===this) PortalGroupDetail.closeTagModal()">
+    <div class="submodal-panel" role="dialog" aria-modal="true" aria-labelledby="tagModalTitle">
+        <div class="submodal-head">
+            <h3 id="tagModalTitle" class="submodal-title">複製參加者標記</h3>
+            <button type="button" class="icon-close-btn" onclick="PortalGroupDetail.closeTagModal()" aria-label="關閉">✕</button>
+        </div>
+        <textarea id="tagTextarea" class="field-textarea mono" rows="4" readonly></textarea>
+        <div class="submodal-actions">
+            <button type="button" class="btn btn--secondary" onclick="PortalGroupDetail.closeTagModal()">關閉</button>
+            <button type="button" id="tagCopyBtn" class="btn btn--primary" onclick="PortalGroupDetail.copyTagText()">複製全員</button>
+        </div>
+    </div>
+</div>
+
+<div id="ghSheetOverlay" class="drawer-overlay" onclick="if(event.target===this) PortalHistory.closeGhSheet()">
+    <div id="ghSheetPanel" class="drawer-panel detail-drawer" role="dialog" aria-modal="true" aria-labelledby="ghSheetTitle">
+        <div class="drawer-header">
+            <div class="drawer-header__meta">
+                <span id="ghSheetTime" class="mono meta-pill"></span>
+                <span id="ghSheetStatus" class="status-pill"></span>
+            </div>
+            <button type="button" class="icon-close-btn" onclick="PortalHistory.closeGhSheet()" aria-label="關閉詳情">✕</button>
+        </div>
+        <div id="ghSheetBody" class="drawer-body">
+            <h2 id="ghSheetTitle" class="detail-h2"></h2>
+            <div class="kv-box">
+                <div class="kv-row kv-row--time"><span class="kv-k">活動時間</span><span id="ghSheetActivityTime" class="kv-v kv-v--time mono"></span></div>
+                <div class="kv-row" id="ghSheetHostDateRow"><span class="kv-k">發起日期</span><span id="ghSheetHostDate" class="kv-v mono"></span></div>
+            </div>
+            <div id="ghSheetLocCard" class="loc-mini-card" style="display: none;">
+                <div>
+                    <div class="loc-mini-name">📍 <span id="ghSheetLocName"></span></div>
+                    <div id="ghSheetLocAddr" class="loc-mini-addr"></div>
                 </div>
-
-                <div class="profile-section">
-                    <div class="profile-section-lbl">🏆 成就勳章牆 <span class="lbl-hint">(點擊稱號看來源)</span></div>
-                    <div class="badges-wrap" id="cardBadges"></div>
+                <a id="ghSheetMapBtn" href="#" target="_blank" rel="noopener noreferrer" class="btn btn--secondary btn--compact">地圖 ↗</a>
+            </div>
+            <div class="detail-block">
+                <div class="detail-label">📝 活動內容</div>
+                <div id="ghSheetContent" class="detail-prose"></div>
+            </div>
+            <div class="detail-block">
+                <div class="detail-label-row">
+                    <span class="detail-label" id="ghSheetJoinerCount">👥 參與名單</span>
+                    <span class="detail-sub-hint">點擊名字篩選該群友</span>
                 </div>
+                <div id="ghSheetMemberChips" class="member-chips-wrap history-chips-wrap"></div>
+            </div>
+            <div class="detail-block gh-comments-block" id="ghSheetCommentsBlock"></div>
+        </div>
+    </div>
+</div>
 
-                <div class="profile-section">
-                    <div class="profile-section-lbl">📊 社群活動與活躍統計</div>
-                    <div class="stats-grid mono">
-                        <div class="stat-block"><div class="stat-num" id="statHost">0</div><div class="stat-lbl">主辦揪團</div></div>
-                        <div class="stat-block"><div class="stat-num" id="statJoin">0</div><div class="stat-lbl">參加揪團</div></div>
-                        <div class="stat-block"><div class="stat-num" id="statMsg">0</div><div class="stat-lbl">總發言數</div></div>
-                        <div class="stat-block"><div class="stat-num" id="statSticker">0</div><div class="stat-lbl">貼圖統計</div></div>
-                        <div class="stat-block"><div class="stat-num" id="statUnsend">0</div><div class="stat-lbl">收回訊息</div></div>
-                        <div class="stat-block is-day"><div class="stat-num" id="statDailyMsg">0</div><div class="stat-lbl">本日活躍</div></div>
-                        <div class="stat-block is-month"><div class="stat-num" id="statMonthMsg">0</div><div class="stat-lbl">本月活躍</div></div>
-                        <div class="stat-block is-year"><div class="stat-num" id="statYearMsg">0</div><div class="stat-lbl">年度活躍</div></div>
-                    </div>
+<!-- ================================================================
+     MODAL 4: 全站共用個人數位名片 Modal + 編輯名片 Modal + 頭像放大 Lightbox
+     ================================================================ -->
+<div id="profileModalOverlay" class="profile-overlay" onclick="if(event.target===this) PortalProfile.close()">
+    <div class="profile-card-modal" onclick="PortalProfile.handleCardClick(event)" role="dialog" aria-modal="true" aria-labelledby="cardName">
+        <div class="badge-tooltip" id="badgeTooltip" onclick="event.stopPropagation()">
+            <div class="badge-tooltip-head">
+                <span class="badge-tooltip-title" id="badgeTooltipTitle">稱號名稱</span>
+                <button type="button" class="badge-tooltip-x" onclick="PortalProfile.hideBadgeTooltip()" aria-label="關閉說明">✕</button>
+            </div>
+            <div class="badge-tooltip-desc" id="badgeTooltipDesc">來源說明...</div>
+        </div>
+
+        <div class="profile-modal-head">
+            <button type="button" class="profile-close-btn" onclick="PortalProfile.close()" aria-label="關閉名片">✕</button>
+            <img id="cardAvatar" class="profile-modal-avatar" src="https://imgur.com/786FxAA.jpg" alt="成員頭像" onclick="PortalProfile.showImgLightbox(this.src, this)" title="點擊放大頭像">
+            <div class="profile-modal-name" id="cardName">載入中...</div>
+            <div class="profile-modal-sub mono" id="cardJoinDays">已加入社群</div>
+            <div class="profile-social-links" id="cardSocialLinks"></div>
+        </div>
+
+        <div class="profile-modal-body" id="profileModalBody">
+            <div id="selfEditArea" style="display: none;">
+                <button type="button" class="btn btn--primary btn--full" onclick="PortalProfile.openEditModal()">✏️ 編輯我的個人名片</button>
+            </div>
+            <div id="guestEditHint" style="display: none; text-align: center;">
+                <button type="button" class="btn btn--secondary btn--full" onclick="PortalAuth.triggerLogin()">🔑 使用 LINE 登入驗證以編輯本人名片</button>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-cell"><span class="info-cell-title">🎂 年齡</span><span class="info-cell-val" id="cardAge">秘密 🤫</span></div>
+                <div class="info-cell"><span class="info-cell-title">✨ 星座</span><span class="info-cell-val" id="cardZodiac">--</span></div>
+                <div class="info-cell"><span class="info-cell-title">📍 居住地</span><span class="info-cell-val" id="cardResidence">--</span></div>
+                <div class="info-cell"><span class="info-cell-title">💼 職業</span><span class="info-cell-val" id="cardOccupation">--</span></div>
+                <div class="info-cell"><span class="info-cell-title">💖 感情狀態</span><span class="info-cell-val" id="cardRelationship">--</span></div>
+                <div class="info-cell" id="cardJoinDateCell"><span class="info-cell-title">📅 入群日期</span><span class="info-cell-val mono" id="cardJoinDate">--</span></div>
+                <div class="info-cell admin-bday-cell" id="cardBirthdayCell" style="display: none;" onclick="PortalProfile.openEditBirthdayDialog(event)" title="點擊設定生日與推播提醒">
+                    <span class="info-cell-title">🎂 生日 <span class="bday-remind-badge" id="cardBirthdayRemindBadge">🔕</span> <span class="admin-edit-tag">✎</span></span>
+                    <span class="info-cell-val mono" id="cardBirthday">未填寫</span>
+                </div>
+            </div>
+
+            <div class="profile-section">
+                <div class="profile-section-lbl">📝 自我介紹</div>
+                <div class="bio-box" id="cardBio">載入自介中...</div>
+            </div>
+
+            <div class="profile-section">
+                <div class="profile-section-lbl">🏆 成就勳章牆 <span class="lbl-hint">(點擊稱號看來源)</span></div>
+                <div class="badges-wrap" id="cardBadges"></div>
+            </div>
+
+            <div class="profile-section">
+                <div class="profile-section-lbl">📊 社群活動與活躍統計</div>
+                <div class="stats-grid mono">
+                    <div class="stat-block"><div class="stat-num" id="statHost">0</div><div class="stat-lbl">主辦揪團</div></div>
+                    <div class="stat-block"><div class="stat-num" id="statJoin">0</div><div class="stat-lbl">參加揪團</div></div>
+                    <div class="stat-block"><div class="stat-num" id="statMsg">0</div><div class="stat-lbl">總發言數</div></div>
+                    <div class="stat-block"><div class="stat-num" id="statSticker">0</div><div class="stat-lbl">貼圖統計</div></div>
+                    <div class="stat-block"><div class="stat-num" id="statUnsend">0</div><div class="stat-lbl">收回訊息</div></div>
+                    <div class="stat-block is-day"><div class="stat-num" id="statDailyMsg">0</div><div class="stat-lbl">本日活躍</div></div>
+                    <div class="stat-block is-month"><div class="stat-num" id="statMonthMsg">0</div><div class="stat-lbl">本月活躍</div></div>
+                    <div class="stat-block is-year"><div class="stat-num" id="statYearMsg">0</div><div class="stat-lbl">年度活躍</div></div>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- 編輯個人名片 Modal -->
-    <div id="editProfileOverlay" class="submodal-overlay" onclick="if(event.target===this) PortalProfile.closeEditModal()">
-        <div class="submodal-panel edit-profile-panel" role="dialog" aria-modal="true" aria-labelledby="editProfileTitle">
-            <div class="submodal-head">
-                <h3 id="editProfileTitle" class="submodal-title">編輯我的個人名片</h3>
-                <button type="button" class="icon-close-btn" onclick="PortalProfile.closeEditModal()" aria-label="關閉">✕</button>
-            </div>
-            <div class="edit-profile-scroll">
-                <div class="form-field">
-                    <label for="editAge">🎂 年齡 / 出生年</label>
-                    <input type="text" id="editAge" class="field-input" inputmode="numeric" placeholder="例如：18（永遠18歲）或 1995（西元出生年）" maxlength="10" oninput="PortalProfile.clampBirthYearInput(this)">
-                    <div class="edit-hint">
-                        • 輸入 <b>1899 以下</b>：顯示為「<b>永遠的XX歲</b>」（保留凍齡設定，例如 18 → 永遠的18歲）<br>
-                        • 輸入 <b>1900～今年（西元出生年）</b>：依生日自動計算實際歲數；若填寫未來年份會自動跳回今年<br>
-                        • <b>留空</b>：顯示為「<b>秘密 🤫</b>」
-                    </div>
-                </div>
-                <div class="form-field">
-                    <label for="editResidence">📍 居住地</label>
-                    <input type="text" id="editResidence" class="field-input" placeholder="例如：台北市、新北市板橋區" maxlength="30">
-                </div>
-                <div class="form-field">
-                    <label for="editOccupation">💼 職業 / 領域</label>
-                    <input type="text" id="editOccupation" class="field-input" placeholder="例如：軟體工程師、設計、服務業" maxlength="30">
-                </div>
-                <div class="form-field">
-                    <label for="editRelationship">💖 感情狀態</label>
-                    <select id="editRelationship" class="field-select">
-                        <option value="單身 🟢">單身 🟢</option>
-                        <option value="穩定交往 💑">穩定交往 💑</option>
-                        <option value="開放式關係 🌈">開放式關係 🌈</option>
-                        <option value="一言難盡 🌀">一言難盡 🌀</option>
-                        <option value="秘密 🤫">秘密 🤫</option>
-                    </select>
-                </div>
-                <div class="form-field">
-                    <label>🔗 社群媒體連結（可填網址或帳號）</label>
-                    <div class="social-edit-stack">
-                        <input type="text" id="editInstagram" class="field-input" placeholder="Instagram 連結或帳號" maxlength="200">
-                        <input type="text" id="editX" class="field-input" placeholder="X (Twitter) 連結或帳號" maxlength="200">
-                        <input type="text" id="editFacebook" class="field-input" placeholder="Facebook 個人主頁連結或帳號" maxlength="200">
-                    </div>
-                </div>
-                <div class="form-field">
-                    <label for="editBio">📝 自我介紹（最多 300 字）</label>
-                    <textarea id="editBio" class="field-textarea" rows="4" placeholder="分享一下你的喜好、常出沒地點或一句座右銘吧～" maxlength="300"></textarea>
+<!-- 編輯個人名片 Modal -->
+<div id="editProfileOverlay" class="submodal-overlay" onclick="if(event.target===this) PortalProfile.closeEditModal()">
+    <div class="submodal-panel edit-profile-panel" role="dialog" aria-modal="true" aria-labelledby="editProfileTitle">
+        <div class="submodal-head">
+            <h3 id="editProfileTitle" class="submodal-title">編輯我的個人名片</h3>
+            <button type="button" class="icon-close-btn" onclick="PortalProfile.closeEditModal()" aria-label="關閉">✕</button>
+        </div>
+        <div class="edit-profile-scroll">
+            <div class="form-field">
+                <label for="editAge">🎂 年齡 / 出生年</label>
+                <input type="text" id="editAge" class="field-input" inputmode="numeric" placeholder="例如：18（永遠18歲）或 1995（西元出生年）" maxlength="10" oninput="PortalProfile.clampBirthYearInput(this)">
+                <div class="edit-hint">
+                    • 輸入 <b>1899 以下</b>：顯示為「<b>永遠的XX歲</b>」（保留凍齡設定，例如 18 → 永遠的18歲）<br>
+                    • 輸入 <b>1900～今年（西元出生年）</b>：依生日自動計算實際歲數；若填寫未來年份會自動跳回今年<br>
+                    • <b>留空</b>：顯示為「<b>秘密 🤫</b>」
                 </div>
             </div>
-            <div class="submodal-actions">
-                <button type="button" class="btn btn--secondary" onclick="PortalProfile.closeEditModal()">取消</button>
-                <button type="button" id="btnSaveProfile" class="btn btn--primary" onclick="PortalProfile.submitEdit()">儲存名片</button>
+            <div class="form-field">
+                <label for="editResidence">📍 居住地</label>
+                <input type="text" id="editResidence" class="field-input" placeholder="例如：台北市、新北市板橋區" maxlength="30">
+            </div>
+            <div class="form-field">
+                <label for="editOccupation">💼 職業 / 領域</label>
+                <input type="text" id="editOccupation" class="field-input" placeholder="例如：軟體工程師、設計、服務業" maxlength="30">
+            </div>
+            <div class="form-field">
+                <label for="editRelationship">💖 感情狀態</label>
+                <select id="editRelationship" class="field-select">
+                    <option value="單身 🟢">單身 🟢</option>
+                    <option value="穩定交往 💑">穩定交往 💑</option>
+                    <option value="開放式關係 🌈">開放式關係 🌈</option>
+                    <option value="一言難盡 🌀">一言難盡 🌀</option>
+                    <option value="秘密 🤫">秘密 🤫</option>
+                </select>
+            </div>
+            <div class="form-field">
+                <label>🔗 社群媒體連結（可填網址或帳號）</label>
+                <div class="social-edit-stack">
+                    <input type="text" id="editInstagram" class="field-input" placeholder="Instagram 連結或帳號" maxlength="200">
+                    <input type="text" id="editX" class="field-input" placeholder="X (Twitter) 連結或帳號" maxlength="200">
+                    <input type="text" id="editFacebook" class="field-input" placeholder="Facebook 個人主頁連結或帳號" maxlength="200">
+                </div>
+            </div>
+            <div class="form-field">
+                <label for="editBio">📝 自我介紹（最多 300 字）</label>
+                <textarea id="editBio" class="field-textarea" rows="4" placeholder="分享一下你的喜好、常出沒地點或一句座右銘吧～" maxlength="300"></textarea>
             </div>
         </div>
+        <div class="submodal-actions">
+            <button type="button" class="btn btn--secondary" onclick="PortalProfile.closeEditModal()">取消</button>
+            <button type="button" id="btnSaveProfile" class="btn btn--primary" onclick="PortalProfile.submitEdit()">儲存名片</button>
+        </div>
     </div>
+</div>
 
-    <!-- 頭像放大 Lightbox -->
-    <div id="imgLightbox" class="lightbox-overlay" onclick="PortalProfile.closeImgLightbox()">
-        <button type="button" class="lightbox-close-btn" onclick="PortalProfile.closeImgLightbox()" aria-label="關閉預覽">✕</button>
-        <img id="lightboxImage" src="" alt="頭像預覽" onclick="event.stopPropagation()">
-    </div>
+<!-- 頭像放大 Lightbox -->
+<div id="imgLightbox" class="lightbox-overlay" onclick="PortalProfile.closeImgLightbox()">
+    <button type="button" class="lightbox-close-btn" onclick="PortalProfile.closeImgLightbox()" aria-label="關閉預覽">✕</button>
+    <img id="lightboxImage" src="" alt="頭像預覽" onclick="event.stopPropagation()">
+</div>
 
-    <script src="./portal/js/api.js"></script>
-    <script src="./portal/js/auth.js"></script>
-    <script src="./portal/js/profileModal.js"></script>
-    <script src="./portal/js/jukebox.js"></script>
-    <script src="./portal/js/groupDetail.js"></script>
-    <script src="./portal/js/groupForm.js"></script>
-    <script src="./portal/js/membersView.js"></script>
-    <script src="./portal/js/historyViews.js"></script>
-    <script src="./portal/js/app.js"></script>
+<script src="./portal/js/api.js"></script>
+<script src="./portal/js/auth.js"></script>
+<script src="./portal/js/profileModal.js"></script>
+<script src="./portal/js/jukebox.js"></script>
+<script src="./portal/js/groupDetail.js"></script>
+<script src="./portal/js/groupForm.js"></script>
+<script src="./portal/js/membersView.js"></script>
+<script src="./portal/js/historyViews.js"></script>
+<script src="./portal/js/otherView.js"></script>
+<script src="./portal/js/app.js"></script>
 </body>
 </html>

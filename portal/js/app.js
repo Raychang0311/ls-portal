@@ -134,6 +134,7 @@ window.PortalApp = (function() {
 
         if (tabKey === 'groupHistory') window.PortalHistory.ensureGroupHistoryLoaded();
         if (tabKey === 'leftHistory') window.PortalHistory.ensureLeftHistoryLoaded();
+        if (tabKey === 'other' && window.PortalOther) window.PortalOther.ensureLoaded();
 
         if (updateHash && window.history && window.history.replaceState) {
             try {
