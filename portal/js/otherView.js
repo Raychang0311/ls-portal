@@ -16,13 +16,12 @@ window.PortalOther = (function() {
     const BOT_COMMANDS = [
         // --- 揪團活動 ---
         { cat: 'group', cmd: '所有揪團', aliases: ['全部揪團', '全部活動', '所有活動'], desc: '顯示目前所有進行中的揪團卡片輪播（超過 12 團自動切換雙層、超過 24 團自動改精簡列表）。', copy: '所有揪團' },
-        { cat: 'group', cmd: '揪團精簡', aliases: ['精簡揪團'], desc: '以精簡清單形式列出目前所有進行中揪團，適合團數較多時快速掃描。', copy: '揪團精簡' },
+        { cat: 'group', cmd: '精簡揪團', aliases: ['揪團精簡'], desc: '以精簡清單形式列出目前所有進行中揪團，適合團數較多時快速瀏覽。', copy: '精簡揪團' },
         { cat: 'group', cmd: '我的揪團', aliases: ['我的活動'], desc: '查詢由你本人擔任主揪的進行中揪團清單。', copy: '我的揪團' },
         { cat: 'group', cmd: '我的參團', aliases: ['我加的團', '我加入的揪團', '我參加的揪團', '我加入的團', '我參加的團'], desc: '查詢你目前已報名參加的所有進行中揪團。', copy: '我的參團' },
         { cat: 'group', cmd: '本月揪團', aliases: ['當月揪團', '本月活動', '當月活動'], desc: '篩選並列出本月份開始的所有進行中揪團。', copy: '本月揪團' },
         { cat: 'group', cmd: '次月揪團', aliases: ['次月活動'], desc: '篩選並列出下個月開始的所有進行中揪團。', copy: '次月揪團' },
         { cat: 'group', cmd: '揪團搜尋#關鍵字', aliases: ['揪團查詢#關鍵字'], desc: '依關鍵字（至少 2 字）搜尋揪團標題與活動內文。', copy: '揪團搜尋#' },
-        { cat: 'group', cmd: '揪團顯示#編號', aliases: [], desc: '依列表順序編號（如 #1）顯示指定那一筆揪團卡片。', copy: '揪團顯示#' },
         { cat: 'group', cmd: '揪團備註#團號#備註', aliases: ['修改備註#團號#備註'], desc: '為已報名或候補中的揪團填寫／更新個人備註（如開車+1、會晚到）。', copy: '揪團備註#' },
         { cat: 'group', cmd: '我要揪團', aliases: ['懶人揪團'], desc: '取得建立揪團表單的專屬連結卡片。', copy: '我要揪團' },
         { cat: 'group', cmd: '修改揪團', aliases: [], desc: '僅限「私訊機器人聊天室」使用，列出你主揪的揪團供點選編輯。', copy: '修改揪團' },
@@ -57,15 +56,15 @@ window.PortalOther = (function() {
 
         // --- 星座與氣象 ---
         { cat: 'weather', cmd: '今日運勢', aliases: ['星座今日運勢', '星座運勢'], desc: '一次取得 12 星座今日運勢輪播卡片（含整體、愛情、事業、財運）。', copy: '今日運勢' },
-        { cat: 'weather', cmd: '天蠍座', aliases: ['牡羊座 / 金牛座 / 雙子座... 或 星座+今日運勢'], desc: '輸入任一星座名稱（支援 12 星座），單獨查詢該星座今日運勢。', copy: '天蠍座' },
+        { cat: 'weather', cmd: '雙魚座', aliases: ['牡羊座 / 金牛座 / 雙子座... 或 星座+今日運勢'], desc: '輸入任一星座名稱（支援 12 星座），單獨查詢該星座今日運勢。', copy: '雙魚座' },
         { cat: 'weather', cmd: '溫度分布圖', aliases: ['溫度圖', '溫度分佈圖', '溫度分布', '溫度分佈'], desc: '向中央氣象署抓取最新全台溫度分布圖。', copy: '溫度分布圖' },
         { cat: 'weather', cmd: '雷達回波圖', aliases: ['衛星雲圖', '雷達回波'], desc: '抓取中央氣象署最新雷達回波即時影像。', copy: '雷達回波圖' },
         { cat: 'weather', cmd: '雨量圖', aliases: [], desc: '向中央氣象署抓取最新全台累積雨量分布圖。', copy: '雨量圖' },
         { cat: 'weather', cmd: '地震報告', aliases: [], desc: '查詢中央氣象署最新顯著／小區域有感地震報告圖卡。', copy: '地震報告' },
 
         // --- 趣味搜尋與召喚 ---
-        { cat: 'fun', cmd: 'GPT 問題或對話', aliases: [], desc: '呼叫 OpenAI GPT 模型以「機機」人設回答問題並進行網路搜尋（回覆時會引用原訊息）。', copy: 'GPT ' },
-        { cat: 'fun', cmd: '孤狗 問題或內容', aliases: ['谷歌 問題或內容'], desc: '呼叫 Gemini 模型回答提問並引用原訊息回覆。', copy: '孤狗 ' },
+        { cat: 'fun', cmd: 'GPT 問題或對話', aliases: [], desc: '呼叫 OpenAI GPT 模型以「機機」人設回答問題並進行網路搜尋。', copy: 'GPT ' },
+        { cat: 'fun', cmd: '孤狗 問題或內容', aliases: ['谷歌 問題或內容', 'gemini 問題或內容'], desc: '呼叫 Gemini 模型進行 Google 網路搜尋並回答提問。', copy: '孤狗 ' },
         { cat: 'fun', cmd: '召喚貓貓', aliases: ['召喚貓咪', '召喚卯咪'], desc: '隨機召喚一張可愛貓咪照片。', copy: '召喚貓貓' },
         { cat: 'fun', cmd: '召喚狗狗', aliases: ['召喚狗勾'], desc: '隨機召喚一張可愛狗狗照片。', copy: '召喚狗狗' },
         { cat: 'fun', cmd: '召喚柴柴', aliases: ['召喚+犬種或貓種名稱（如 召喚柯基、召喚布偶）'], desc: '依品種對照表召喚指定品種的貓咪或狗狗圖片。', copy: '召喚柴柴' },
