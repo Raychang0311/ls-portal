@@ -403,10 +403,10 @@ window.PortalHistory = (function() {
                 } else if (isEditing) {
                     bodyHtml = `
                         <div class="gh-comment-edit-box">
-                            <textarea id="${prefix}EditInput_${c.floor}" class="gh-comment-input" maxlength="500">${escapeHtml(c.content)}</textarea>
+                            <textarea id="${prefix}EditInput_${c.floor}" class="gh-comment-input" maxlength="500" oninput="PortalHistory.handleEditInput('${prefix}', ${c.floor})">${escapeHtml(c.content)}</textarea>
                             <div class="gh-comment-edit-actions">
                                 <button type="button" class="gh-comment-act-btn" onclick="PortalHistory.cancelEditComment('${prefix}')">取消</button>
-                                <button type="button" class="gh-comment-act-btn" style="border-color:var(--p-action);color:var(--p-action);" onclick="PortalHistory.saveEditComment('${prefix}', ${c.floor})">儲存</button>
+                                <button type="button" id="${prefix}SaveEditBtn_${c.floor}" class="gh-comment-act-btn is-save" onclick="PortalHistory.saveEditComment('${prefix}', ${c.floor})" disabled>儲存</button>
                             </div>
                         </div>`;
                 } else {
@@ -442,9 +442,8 @@ window.PortalHistory = (function() {
 
         container.innerHTML = `
             <div class="gh-comments-head">
-                <span class="detail-label" id="${prefix}CommentsTitle">💬 留言討論區 (${totalFloors} 樓)</span>
+                <span class="detail-label" id="${prefix}CommentsTitle">💬 留言討論區 (${totalFloors} 則)</span>
                 <div class="gh-comments-head-right">
-                    <span class="detail-sub-hint">由舊到新排列</span>
                     <button type="button" id="${prefix}CmtRefreshBtn" class="gh-cmt-refresh-btn ${st.refreshing ? 'is-spinning' : ''}" onclick="PortalHistory.refreshComments('${prefix}')" aria-label="重新整理留言區" title="重新整理留言">
                         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                             <path d="M21 12a9 9 0 1 1-2.64-6.36"/>
@@ -464,7 +463,7 @@ window.PortalHistory = (function() {
         `;
     }
 
-    function updateCommentsListOnly(prefix, rec) {
+    function updateCommentsListOnly(prefix, rec, preserveDraft) {
         const titleEl = document.getElementById(`${prefix}CommentsTitle`);
         const listEl = document.getElementById(`${prefix}CommentsList`);
         if (!titleEl || !listEl || ghCommentUi[prefix].editingFloor !== null) {
@@ -473,8 +472,8 @@ window.PortalHistory = (function() {
         }
         const st = ghCommentUi[prefix];
         const prevInput = document.getElementById(`${prefix}CommentInput`);
-        const draftText = prevInput ? prevInput.value : '';
-        const focused = prevInput && document.activeElement === prevInput;
+        const draftText = preserveDraft && prevInput ? prevInput.value : '';
+        const focused = preserveDraft && prevInput && document.activeElement === prevInput;
         renderGhCommentsSection(prefix, rec);
         if (draftText) {
             const nextInput = document.getElementById(`${prefix}CommentInput`);
@@ -487,7 +486,8 @@ window.PortalHistory = (function() {
         if (btn) btn.classList.toggle('is-spinning', Boolean(st.refreshing));
     }
 
-    function applyUpdatedComments(rec, rawServerComments) {
+    function applyUpdatedComments(rec, rawServerComments, opts) {
+        const preserveDraft = Boolean(opts && opts.preserveDraft);
         rec.comments = normalizeGhComments(rawServerComments);
         const totalFloors = rec.comments.length;
         document.querySelectorAll(`[data-gh-cmt-count]`).forEach(el => {
@@ -496,7 +496,7 @@ window.PortalHistory = (function() {
             }
         });
         ['ghPane', 'ghSheet'].forEach(p => {
-            if (ghCommentUi[p].rec === rec) updateCommentsListOnly(p, rec);
+            if (ghCommentUi[p].rec === rec) updateCommentsListOnly(p, rec, preserveDraft);
         });
     }
 
@@ -519,7 +519,7 @@ window.PortalHistory = (function() {
             if (btnNow) btnNow.classList.remove('is-spinning');
             if (!res || !res.success || !Array.isArray(res.comments)) return;
             if (res.rowIndex) rec.rowIndex = res.rowIndex;
-            applyUpdatedComments(rec, res.comments);
+            applyUpdatedComments(rec, res.comments, { preserveDraft: true });
         }, () => {
             if (st.fetchToken !== token) return;
             st.refreshing = false;
@@ -601,7 +601,8 @@ window.PortalHistory = (function() {
             if (res.rowIndex) rec.rowIndex = res.rowIndex;
             st.replyTo = null;
             st.replyToName = '';
-            applyUpdatedComments(rec, res.comments);
+            if (input) input.value = '';
+            applyUpdatedComments(rec, res.comments, { preserveDraft: false });
             if (res.addedFloor) scrollToCommentFloor(prefix, res.addedFloor);
         }, err => {
             st.busy = false;
@@ -617,6 +618,19 @@ window.PortalHistory = (function() {
         renderGhCommentsSection(prefix, st.rec);
         const box = document.getElementById(`${prefix}EditInput_${floor}`);
         if (box) box.focus();
+        handleEditInput(prefix, floor);
+    }
+
+    function handleEditInput(prefix, floor) {
+        const st = ghCommentUi[prefix];
+        if (!st || !st.rec) return;
+        const box = document.getElementById(`${prefix}EditInput_${floor}`);
+        const saveBtn = document.getElementById(`${prefix}SaveEditBtn_${floor}`);
+        if (!box || !saveBtn) return;
+        const orig = (st.rec.comments || []).find(c => c.floor === floor);
+        const origTrim = String((orig && orig.content) || '').trim();
+        const curTrim = box.value.trim();
+        saveBtn.disabled = !curTrim || curTrim === origTrim;
     }
 
     function cancelEditComment(prefix) {
@@ -631,12 +645,13 @@ window.PortalHistory = (function() {
         if (!st || !st.rec || st.busy) return;
         const box = document.getElementById(`${prefix}EditInput_${floor}`);
         const text = box ? box.value.trim() : '';
-        if (!text) {
-            Swal.fire({ icon: 'warning', title: '留言內容不能為空', confirmButtonColor: '#3a6e59' });
-            return;
-        }
+        const orig = (st.rec.comments || []).find(c => c.floor === floor);
+        const origTrim = String((orig && orig.content) || '').trim();
+        if (!text || text === origTrim) return;
+
         const rec = st.rec;
         st.busy = true;
+        Swal.fire({ title: '儲存中...', allowOutsideClick: false, allowEscapeKey: false, didOpen: () => Swal.showLoading() });
         callGasApi('groupHistory', 'editHistoryComment', {
             rowIndex: rec.rowIndex,
             rowKey: rec.rowKey,
@@ -649,9 +664,10 @@ window.PortalHistory = (function() {
                 Swal.fire({ icon: 'error', title: '修改失敗', text: (res && res.error) || '發生未知錯誤', confirmButtonColor: '#3a6e59' });
                 return;
             }
+            Swal.close();
             if (res.rowIndex) rec.rowIndex = res.rowIndex;
             st.editingFloor = null;
-            applyUpdatedComments(rec, res.comments);
+            applyUpdatedComments(rec, res.comments, { preserveDraft: true });
         }, err => {
             st.busy = false;
             Swal.fire({ icon: 'error', title: '系統錯誤', text: '修改留言失敗：' + err, confirmButtonColor: '#3a6e59' });
@@ -664,8 +680,7 @@ window.PortalHistory = (function() {
         const rec = st.rec;
         Swal.fire({
             icon: 'warning',
-            title: `確定要刪除 #${floor} 的留言嗎？`,
-            text: '刪除後該樓層將會保留並顯示為「留言已刪除」。',
+            title: `確定要刪除留言嗎？`,
             showCancelButton: true,
             confirmButtonColor: '#c53030',
             cancelButtonColor: '#6b7280',
@@ -938,6 +953,7 @@ window.PortalHistory = (function() {
         refreshComments,
         submitComment,
         startEditComment,
+        handleEditInput,
         cancelEditComment,
         saveEditComment,
         deleteComment,
