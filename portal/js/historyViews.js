@@ -167,6 +167,33 @@ window.PortalHistory = (function() {
         applyGhFilters();
     }
 
+    function normalizeGhComments(rawList) {
+        if (!Array.isArray(rawList)) return [];
+        return rawList
+            .filter(c => c && typeof c === 'object')
+            .map((c, idx) => {
+                const uid = String(c.userId || '').trim();
+                const m = uid ? window.PortalApi.findMemberById(uid) : null;
+                const isDel = String(c.deleted || '').trim().toUpperCase() === 'Y';
+                const floorNum = parseInt(c.floor, 10) || (idx + 1);
+                const rNum = (c.replyTo !== undefined && c.replyTo !== null && c.replyTo !== '' && !isNaN(parseInt(c.replyTo, 10)))
+                    ? parseInt(c.replyTo, 10)
+                    : null;
+                return {
+                    floor: floorNum,
+                    time: String(c.time || '').trim(),
+                    userId: uid,
+                    userName: String(c.userName || (m && m.name) || '群友'),
+                    userPic: String(c.userPic || (m && m.pic) || 'https://imgur.com/786FxAA.jpg'),
+                    content: isDel ? '' : String(c.content || ''),
+                    replyTo: rNum,
+                    deleted: isDel ? 'Y' : '',
+                    editedTime: isDel ? '' : String(c.editedTime || '').trim()
+                };
+            })
+            .sort((a, b) => a.floor - b.floor);
+    }
+
     function normalizeGhRecord(raw) {
         const content = String(raw && raw.content ? raw.content : '').replace(/\r\n?/g, '\n');
         const lines = content.split('\n');
@@ -184,12 +211,15 @@ window.PortalHistory = (function() {
         const locLines = locRaw ? locRaw.split('\n').map(l => l.trim()).filter(Boolean) : [];
 
         return {
+            rowIndex: raw && raw.rowIndex ? parseInt(raw.rowIndex, 10) : 0,
+            rowKey: String((raw && raw.rowKey) || `${host}|${hostDate}|${startTime}`),
             host, hostLower: host.toLowerCase(), hostDate, startTime, endTime,
             displayTime: window.PortalApi.formatSmartDateRange(startTime, endTime, hostDate ? `發起日 ${hostDate}` : '未記錄時間'),
             shortTime: startTime || (hostDate ? `發起 ${hostDate}` : '時間未記錄'),
             content, contentLower: content.toLowerCase(), title, titleLower: title.toLowerCase(), bodyText,
             joiners, joinersLower: joiners.map(j => j.toLowerCase()), endType,
-            locationName: locLines[0] || '', locationAddress: locLines.slice(1).join(' ')
+            locationName: locLines[0] || '', locationAddress: locLines.slice(1).join(' '),
+            comments: normalizeGhComments(raw && raw.comments)
         };
     }
 
@@ -277,13 +307,15 @@ window.PortalHistory = (function() {
             const rec = entry.record;
             const isEarly = rec.endType === '提前關團';
             const sel = isSplitActive() && pos === ghSelectedPos;
+            const totalFloors = Array.isArray(rec.comments) ? rec.comments.length : 0;
+            const commentBadge = totalFloors > 0 ? `<span data-gh-cmt-count="${escapeHtml(rec.rowKey)}"> · 💬 ${totalFloors}</span>` : `<span data-gh-cmt-count="${escapeHtml(rec.rowKey)}"></span>`;
 
             if (isCompact) {
                 html += `
                     <div class="history-row-item ${sel ? 'is-selected' : ''}" data-gh-pos="${pos}" onclick="PortalHistory.selectGhItem(${pos})">
                         <div class="history-row-main">
                             <div class="history-row-title">${highlight(rec.title, ghState.keyword)}</div>
-                            <div class="history-row-sub mono">${escapeHtml(rec.shortTime)} · 主揪 ${escapeHtml(rec.host)} · ${rec.joiners.length}人</div>
+                            <div class="history-row-sub mono">${escapeHtml(rec.shortTime)} · 主揪 ${escapeHtml(rec.host)} · ${rec.joiners.length}人${commentBadge}</div>
                         </div>
                         <span class="status-pill ${isEarly ? 'is-early' : 'is-done'}">${escapeHtml(rec.endType)}</span>
                     </div>`;
@@ -300,6 +332,7 @@ window.PortalHistory = (function() {
                             <span>👑 ${escapeHtml(rec.host)}</span>
                             <span>· 👥 ${rec.joiners.length} 人參加</span>
                             ${rec.locationName ? `<span>· 📍 ${escapeHtml(rec.locationName)}</span>` : ''}
+                            ${commentBadge}
                         </div>
                     </article>`;
             }
@@ -319,6 +352,347 @@ window.PortalHistory = (function() {
         const active = isSplitActive();
         document.querySelectorAll('#ghList [data-gh-pos]').forEach(el => {
             el.classList.toggle('is-selected', active && parseInt(el.dataset.ghPos, 10) === ghSelectedPos);
+        });
+    }
+
+    const ghCommentUi = {
+        ghPane: { rec: null, replyTo: null, replyToName: '', editingFloor: null, busy: false, refreshing: false, fetchToken: 0 },
+        ghSheet: { rec: null, replyTo: null, replyToName: '', editingFloor: null, busy: false, refreshing: false, fetchToken: 0 }
+    };
+
+    function renderGhCommentsSection(prefix, rec) {
+        const container = document.getElementById(`${prefix}CommentsBlock`);
+        if (!container || !rec) return;
+        const st = ghCommentUi[prefix];
+        if (!st.rec || st.rec.rowKey !== rec.rowKey) {
+            st.replyTo = null;
+            st.replyToName = '';
+            st.editingFloor = null;
+        }
+        st.rec = rec;
+
+        const comments = Array.isArray(rec.comments) ? rec.comments : [];
+        const totalFloors = comments.length;
+        const uidLower = String(Store.currentUserId || '').trim().toLowerCase();
+
+        const replyingBarHtml = st.replyTo
+            ? `<div class="gh-replying-bar">
+                    <span>↳ 正在回覆 #${st.replyTo} ${escapeHtml(st.replyToName || '')}</span>
+                    <button type="button" class="gh-replying-cancel" onclick="PortalHistory.clearReplyTarget('${prefix}')" aria-label="取消回覆">✕</button>
+               </div>`
+            : '';
+
+        let listHtml = '';
+        if (comments.length === 0) {
+            listHtml = '<div class="gh-comments-empty">目前還沒有留言，搶下 #1 沙發吧！</div>';
+        } else {
+            listHtml = comments.map(c => {
+                const isDeleted = c.deleted === 'Y';
+                const isMine = Boolean(uidLower && c.userId && c.userId.toLowerCase() === uidLower);
+                const isEditing = !isDeleted && isMine && st.editingFloor === c.floor;
+                const safePic = escapeHtml(c.userPic || 'https://imgur.com/786FxAA.jpg');
+                const safeName = escapeHtml(c.userName || '群友');
+
+                const replyBadgeHtml = c.replyTo
+                    ? `<button type="button" class="gh-reply-ref" onclick="PortalHistory.scrollToCommentFloor('${prefix}', ${c.replyTo})">↳ 回覆 #${c.replyTo}</button>`
+                    : '';
+
+                let bodyHtml = '';
+                if (isDeleted) {
+                    bodyHtml = '<div class="gh-comment-text">留言已刪除</div>';
+                } else if (isEditing) {
+                    bodyHtml = `
+                        <div class="gh-comment-edit-box">
+                            <textarea id="${prefix}EditInput_${c.floor}" class="gh-comment-input" maxlength="500">${escapeHtml(c.content)}</textarea>
+                            <div class="gh-comment-edit-actions">
+                                <button type="button" class="gh-comment-act-btn" onclick="PortalHistory.cancelEditComment('${prefix}')">取消</button>
+                                <button type="button" class="gh-comment-act-btn" style="border-color:var(--p-action);color:var(--p-action);" onclick="PortalHistory.saveEditComment('${prefix}', ${c.floor})">儲存</button>
+                            </div>
+                        </div>`;
+                } else {
+                    bodyHtml = `<div class="gh-comment-text">${escapeHtml(c.content)}</div>`;
+                }
+
+                const actionsHtml = (!isDeleted && !isEditing)
+                    ? `<div class="gh-comment-actions">
+                            <button type="button" class="gh-comment-act-btn" onclick="PortalHistory.setReplyTarget('${prefix}', ${c.floor})">💬 回覆</button>
+                            ${isMine ? `<button type="button" class="gh-comment-act-btn" onclick="PortalHistory.startEditComment('${prefix}', ${c.floor})">✏️ 修改</button>` : ''}
+                            ${isMine ? `<button type="button" class="gh-comment-act-btn is-danger" onclick="PortalHistory.deleteComment('${prefix}', ${c.floor})">🗑️ 刪除</button>` : ''}
+                       </div>`
+                    : '';
+
+                return `
+                    <article class="gh-comment-item ${isDeleted ? 'is-deleted' : ''}" data-comment-floor="${c.floor}">
+                        <img class="gh-comment-avatar" src="${safePic}" alt="${safeName}" loading="lazy" onerror="this.src='https://imgur.com/786FxAA.jpg'">
+                        <div class="gh-comment-main">
+                            <div class="gh-comment-top">
+                                <span class="gh-comment-author">${safeName}</span>
+                                <span class="gh-comment-meta-right">
+                                    <span class="gh-comment-time mono">${escapeHtml(c.time)}${!isDeleted && c.editedTime ? ' (已編輯)' : ''}</span>
+                                    <span class="gh-comment-floor mono">#${c.floor}</span>
+                                </span>
+                            </div>
+                            ${replyBadgeHtml}
+                            ${bodyHtml}
+                            ${actionsHtml}
+                        </div>
+                    </article>`;
+            }).join('');
+        }
+
+        container.innerHTML = `
+            <div class="gh-comments-head">
+                <span class="detail-label" id="${prefix}CommentsTitle">💬 留言討論區 (${totalFloors} 樓)</span>
+                <div class="gh-comments-head-right">
+                    <span class="detail-sub-hint">由舊到新排列</span>
+                    <button type="button" id="${prefix}CmtRefreshBtn" class="gh-cmt-refresh-btn ${st.refreshing ? 'is-spinning' : ''}" onclick="PortalHistory.refreshComments('${prefix}')" aria-label="重新整理留言區" title="重新整理留言">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M21 12a9 9 0 1 1-2.64-6.36"/>
+                            <polyline points="21 3 21 9 15 9"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div class="gh-comment-composer" id="${prefix}Composer">
+                ${replyingBarHtml}
+                <div class="gh-composer-row">
+                    <textarea id="${prefix}CommentInput" class="gh-comment-input" rows="2" maxlength="500" placeholder="寫下留言內容（最多 500 字）..."></textarea>
+                    <button type="button" id="${prefix}CommentSubmit" class="btn btn--primary btn--compact gh-composer-submit" onclick="PortalHistory.submitComment('${prefix}')">送出留言</button>
+                </div>
+            </div>
+            <div class="gh-comments-list" id="${prefix}CommentsList">${listHtml}</div>
+        `;
+    }
+
+    function updateCommentsListOnly(prefix, rec) {
+        const titleEl = document.getElementById(`${prefix}CommentsTitle`);
+        const listEl = document.getElementById(`${prefix}CommentsList`);
+        if (!titleEl || !listEl || ghCommentUi[prefix].editingFloor !== null) {
+            renderGhCommentsSection(prefix, rec);
+            return;
+        }
+        const st = ghCommentUi[prefix];
+        const prevInput = document.getElementById(`${prefix}CommentInput`);
+        const draftText = prevInput ? prevInput.value : '';
+        const focused = prevInput && document.activeElement === prevInput;
+        renderGhCommentsSection(prefix, rec);
+        if (draftText) {
+            const nextInput = document.getElementById(`${prefix}CommentInput`);
+            if (nextInput) {
+                nextInput.value = draftText;
+                if (focused) nextInput.focus();
+            }
+        }
+        const btn = document.getElementById(`${prefix}CmtRefreshBtn`);
+        if (btn) btn.classList.toggle('is-spinning', Boolean(st.refreshing));
+    }
+
+    function applyUpdatedComments(rec, rawServerComments) {
+        rec.comments = normalizeGhComments(rawServerComments);
+        const totalFloors = rec.comments.length;
+        document.querySelectorAll(`[data-gh-cmt-count]`).forEach(el => {
+            if (el.getAttribute('data-gh-cmt-count') === rec.rowKey) {
+                el.textContent = totalFloors > 0 ? ` · 💬 ${totalFloors}` : '';
+            }
+        });
+        ['ghPane', 'ghSheet'].forEach(p => {
+            if (ghCommentUi[p].rec === rec) updateCommentsListOnly(p, rec);
+        });
+    }
+
+    function refreshComments(prefix) {
+        const st = ghCommentUi[prefix];
+        if (!st || !st.rec) return;
+        const rec = st.rec;
+        const token = ++st.fetchToken;
+        st.refreshing = true;
+        const refreshBtn = document.getElementById(`${prefix}CmtRefreshBtn`);
+        if (refreshBtn) refreshBtn.classList.add('is-spinning');
+
+        callGasApi('groupHistory', 'getHistoryComments', {
+            rowIndex: rec.rowIndex,
+            rowKey: rec.rowKey
+        }, res => {
+            if (st.fetchToken !== token) return;
+            st.refreshing = false;
+            const btnNow = document.getElementById(`${prefix}CmtRefreshBtn`);
+            if (btnNow) btnNow.classList.remove('is-spinning');
+            if (!res || !res.success || !Array.isArray(res.comments)) return;
+            if (res.rowIndex) rec.rowIndex = res.rowIndex;
+            applyUpdatedComments(rec, res.comments);
+        }, () => {
+            if (st.fetchToken !== token) return;
+            st.refreshing = false;
+            const btnNow = document.getElementById(`${prefix}CmtRefreshBtn`);
+            if (btnNow) btnNow.classList.remove('is-spinning');
+        }, { preferGet: true });
+    }
+
+    function setReplyTarget(prefix, floor) {
+        const st = ghCommentUi[prefix];
+        if (!st || !st.rec) return;
+        const target = (st.rec.comments || []).find(c => c.floor === floor && c.deleted !== 'Y');
+        if (!target) return;
+        st.replyTo = target.floor;
+        st.replyToName = target.userName || '群友';
+        st.editingFloor = null;
+        renderGhCommentsSection(prefix, st.rec);
+        const comp = document.getElementById(`${prefix}Composer`);
+        const input = document.getElementById(`${prefix}CommentInput`);
+        if (comp && comp.scrollIntoView) comp.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        if (input) input.focus();
+    }
+
+    function clearReplyTarget(prefix) {
+        const st = ghCommentUi[prefix];
+        if (!st || !st.rec) return;
+        st.replyTo = null;
+        st.replyToName = '';
+        renderGhCommentsSection(prefix, st.rec);
+    }
+
+    function scrollToCommentFloor(prefix, floor) {
+        const container = document.getElementById(`${prefix}CommentsList`);
+        if (!container) return;
+        const targetEl = container.querySelector(`[data-comment-floor="${floor}"]`);
+        if (!targetEl) return;
+        if (targetEl.scrollIntoView) {
+            targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        targetEl.classList.remove('is-comment-highlight');
+        void targetEl.offsetWidth;
+        targetEl.classList.add('is-comment-highlight');
+        setTimeout(() => targetEl.classList.remove('is-comment-highlight'), 1300);
+    }
+
+    function submitComment(prefix) {
+        const st = ghCommentUi[prefix];
+        if (!st || !st.rec || st.busy) return;
+        if (!Store.currentUserId) {
+            if (window.PortalAuth && window.PortalAuth.showLoginGate) window.PortalAuth.showLoginGate();
+            return;
+        }
+        const input = document.getElementById(`${prefix}CommentInput`);
+        const btn = document.getElementById(`${prefix}CommentSubmit`);
+        const text = input ? input.value.trim() : '';
+        if (!text) {
+            Swal.fire({ icon: 'warning', title: '請輸入留言內容', confirmButtonColor: '#3a6e59' });
+            return;
+        }
+
+        const rec = st.rec;
+        const replyTo = st.replyTo;
+        st.busy = true;
+        if (btn) { btn.disabled = true; btn.textContent = '送出中...'; }
+
+        callGasApi('groupHistory', 'addHistoryComment', {
+            rowIndex: rec.rowIndex,
+            rowKey: rec.rowKey,
+            userId: Store.currentUserId,
+            content: text,
+            replyTo: replyTo || ''
+        }, res => {
+            st.busy = false;
+            if (!res || !res.success) {
+                if (btn) { btn.disabled = false; btn.textContent = '送出留言'; }
+                Swal.fire({ icon: 'error', title: '留言失敗', text: (res && res.error) || '發生未知錯誤', confirmButtonColor: '#3a6e59' });
+                return;
+            }
+            if (res.rowIndex) rec.rowIndex = res.rowIndex;
+            st.replyTo = null;
+            st.replyToName = '';
+            applyUpdatedComments(rec, res.comments);
+            if (res.addedFloor) scrollToCommentFloor(prefix, res.addedFloor);
+        }, err => {
+            st.busy = false;
+            if (btn) { btn.disabled = false; btn.textContent = '送出留言'; }
+            Swal.fire({ icon: 'error', title: '系統錯誤', text: '送出留言失敗：' + err, confirmButtonColor: '#3a6e59' });
+        });
+    }
+
+    function startEditComment(prefix, floor) {
+        const st = ghCommentUi[prefix];
+        if (!st || !st.rec) return;
+        st.editingFloor = floor;
+        renderGhCommentsSection(prefix, st.rec);
+        const box = document.getElementById(`${prefix}EditInput_${floor}`);
+        if (box) box.focus();
+    }
+
+    function cancelEditComment(prefix) {
+        const st = ghCommentUi[prefix];
+        if (!st || !st.rec) return;
+        st.editingFloor = null;
+        renderGhCommentsSection(prefix, st.rec);
+    }
+
+    function saveEditComment(prefix, floor) {
+        const st = ghCommentUi[prefix];
+        if (!st || !st.rec || st.busy) return;
+        const box = document.getElementById(`${prefix}EditInput_${floor}`);
+        const text = box ? box.value.trim() : '';
+        if (!text) {
+            Swal.fire({ icon: 'warning', title: '留言內容不能為空', confirmButtonColor: '#3a6e59' });
+            return;
+        }
+        const rec = st.rec;
+        st.busy = true;
+        callGasApi('groupHistory', 'editHistoryComment', {
+            rowIndex: rec.rowIndex,
+            rowKey: rec.rowKey,
+            floor: floor,
+            userId: Store.currentUserId,
+            content: text
+        }, res => {
+            st.busy = false;
+            if (!res || !res.success) {
+                Swal.fire({ icon: 'error', title: '修改失敗', text: (res && res.error) || '發生未知錯誤', confirmButtonColor: '#3a6e59' });
+                return;
+            }
+            if (res.rowIndex) rec.rowIndex = res.rowIndex;
+            st.editingFloor = null;
+            applyUpdatedComments(rec, res.comments);
+        }, err => {
+            st.busy = false;
+            Swal.fire({ icon: 'error', title: '系統錯誤', text: '修改留言失敗：' + err, confirmButtonColor: '#3a6e59' });
+        });
+    }
+
+    function deleteComment(prefix, floor) {
+        const st = ghCommentUi[prefix];
+        if (!st || !st.rec || st.busy) return;
+        const rec = st.rec;
+        Swal.fire({
+            icon: 'warning',
+            title: `確定要刪除 #${floor} 的留言嗎？`,
+            text: '刪除後該樓層將會保留並顯示為「留言已刪除」。',
+            showCancelButton: true,
+            confirmButtonColor: '#c53030',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: '確認刪除',
+            cancelButtonText: '取消'
+        }).then(result => {
+            if (!result.isConfirmed) return;
+            st.busy = true;
+            callGasApi('groupHistory', 'deleteHistoryComment', {
+                rowIndex: rec.rowIndex,
+                rowKey: rec.rowKey,
+                floor: floor,
+                userId: Store.currentUserId
+            }, res => {
+                st.busy = false;
+                if (!res || !res.success) {
+                    Swal.fire({ icon: 'error', title: '刪除失敗', text: (res && res.error) || '發生未知錯誤', confirmButtonColor: '#3a6e59' });
+                    return;
+                }
+                if (res.rowIndex) rec.rowIndex = res.rowIndex;
+                if (st.replyTo === floor) { st.replyTo = null; st.replyToName = ''; }
+                if (st.editingFloor === floor) st.editingFloor = null;
+                applyUpdatedComments(rec, res.comments);
+            }, err => {
+                st.busy = false;
+                Swal.fire({ icon: 'error', title: '系統錯誤', text: '刪除留言失敗：' + err, confirmButtonColor: '#3a6e59' });
+            });
         });
     }
 
@@ -373,6 +747,9 @@ window.PortalHistory = (function() {
             chips += `<button type="button" class="member-chip-btn ${matched ? 'is-matched' : ''}" data-member-name="${escapeHtml(name)}" onclick="PortalHistory.filterByMember(this.dataset.memberName)">${escapeHtml(name)}</button>`;
         });
         document.getElementById(`${prefix}MemberChips`).innerHTML = chips;
+
+        renderGhCommentsSection(prefix, rec);
+        refreshComments(prefix);
     }
 
     function renderGhPane(pos) {
@@ -555,6 +932,15 @@ window.PortalHistory = (function() {
         selectGhItem,
         closeGhSheet,
         filterByMember,
+        setReplyTarget,
+        clearReplyTarget,
+        scrollToCommentFloor,
+        refreshComments,
+        submitComment,
+        startEditComment,
+        cancelEditComment,
+        saveEditComment,
+        deleteComment,
         setLhViewMode,
         renderNextLhBatch
     };
