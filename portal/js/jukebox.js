@@ -184,7 +184,7 @@ window.PortalJukebox = (function() {
 
         if (!Store.groupsLoaded || force) {
             if (loadingEl) loadingEl.style.display = 'block';
-            if (shellEl && !Store.groupsLoaded) shellEl.style.display = 'none';
+            if (shellEl) shellEl.style.display = 'none';
             if (emptyEl) emptyEl.style.display = 'none';
         }
 
