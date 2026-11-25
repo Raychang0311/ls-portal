@@ -92,6 +92,11 @@ window.PortalHistory = (function() {
         document.querySelectorAll('[data-gh-status]').forEach(btn => {
             btn.addEventListener('click', () => {
                 ghState.status = btn.dataset.ghStatus;
+                if (ghState.status === 'latestComment') {
+                    ghState.sortOrder = 'newest';
+                    const sortBtn = document.getElementById('ghSortToggleBtn');
+                    if (sortBtn) sortBtn.textContent = '最新 ▾';
+                }
                 document.querySelectorAll('[data-gh-status]').forEach(b => b.classList.toggle('is-active', b === btn));
                 applyGhFilters();
             });
@@ -252,6 +257,39 @@ window.PortalHistory = (function() {
         });
     }
 
+    function parseCommentTimeMs(str) {
+        const raw = String(str || '').trim();
+        if (!raw) return 0;
+        const m = raw.match(/(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})(?:[\sT]+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?/);
+        if (m) {
+            return new Date(
+                parseInt(m[1], 10),
+                parseInt(m[2], 10) - 1,
+                parseInt(m[3], 10),
+                parseInt(m[4] || '0', 10),
+                parseInt(m[5] || '0', 10),
+                parseInt(m[6] || '0', 10)
+            ).getTime();
+        }
+        const parsed = Date.parse(raw.replace(/\//g, '-'));
+        return isNaN(parsed) ? 0 : parsed;
+    }
+
+    function getLatestCommentMeta(rec) {
+        const comments = Array.isArray(rec && rec.comments) ? rec.comments : [];
+        let activeCount = 0;
+        let latestMs = 0;
+        let latestFloor = 0;
+        for (const c of comments) {
+            if (!c || c.deleted === 'Y') continue;
+            activeCount++;
+            const ts = parseCommentTimeMs(c.time);
+            if (ts > latestMs) latestMs = ts;
+            if (c.floor > latestFloor) latestFloor = c.floor;
+        }
+        return { activeCount, latestMs, latestFloor };
+    }
+
     function applyGhFilters() {
         const kw = document.getElementById('ghKeywordInput').value.trim();
         const mb = document.getElementById('ghMemberInput').value.trim();
@@ -259,10 +297,20 @@ window.PortalHistory = (function() {
         ghState.memberQuery = mb;
         const kwL = kw.toLowerCase();
         const mbL = mb.toLowerCase();
+        const isLatestCommentMode = ghState.status === 'latestComment';
 
         const list = [];
         for (const rec of ghRecords) {
-            if (ghState.status !== 'all' && rec.endType !== ghState.status) continue;
+            let latestCommentMs = 0;
+            let latestCommentFloor = 0;
+            if (isLatestCommentMode) {
+                const meta = getLatestCommentMeta(rec);
+                if (meta.activeCount === 0) continue;
+                latestCommentMs = meta.latestMs;
+                latestCommentFloor = meta.latestFloor;
+            } else if (ghState.status !== 'all' && rec.endType !== ghState.status) {
+                continue;
+            }
             if (kwL && !rec.titleLower.includes(kwL) && !rec.contentLower.includes(kwL)) continue;
 
             let mHost = false, mJoin = false;
@@ -273,9 +321,18 @@ window.PortalHistory = (function() {
                 if (ghState.memberScope === 'joiner' && !mJoin) continue;
                 if (ghState.memberScope === 'all' && !mHost && !mJoin) continue;
             }
-            list.push({ record: rec, matchedAsHost: mHost, matchedAsJoiner: mJoin });
+            list.push({ record: rec, matchedAsHost: mHost, matchedAsJoiner: mJoin, latestCommentMs, latestCommentFloor });
         }
-        if (ghState.sortOrder === 'oldest') list.reverse();
+        if (isLatestCommentMode) {
+            list.sort((a, b) => {
+                const diff = b.latestCommentMs - a.latestCommentMs;
+                if (diff !== 0) return diff;
+                return b.latestCommentFloor - a.latestCommentFloor;
+            });
+            if (ghState.sortOrder === 'oldest') list.reverse();
+        } else if (ghState.sortOrder === 'oldest') {
+            list.reverse();
+        }
 
         ghFiltered = list;
         ghRendered = 0;
