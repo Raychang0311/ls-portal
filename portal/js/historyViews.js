@@ -14,6 +14,7 @@ window.PortalHistory = (function() {
     let ghRendered = 0;
     let ghSelectedPos = -1;
     let ghDesktopSplit = true;
+    let ghIsAdmin = false;
     const ghState = { keyword: '', memberQuery: '', memberScope: 'all', status: 'all', sortOrder: 'newest', viewMode: 'card' };
 
     let lhRecords = [];
@@ -229,8 +230,13 @@ window.PortalHistory = (function() {
             content, contentLower: content.toLowerCase(), title, titleLower: title.toLowerCase(), bodyText,
             joiners, joinersLower: joiners.map(j => j.toLowerCase()), endType,
             locationName: locLines[0] || '', locationAddress: locLines.slice(1).join(' '),
+            albumFolderId: String(raw && raw.albumFolderId ? raw.albumFolderId : '').trim(),
             comments: normalizeGhComments(raw && raw.comments)
         };
+    }
+
+    function isGhAdmin() {
+        return Boolean(ghIsAdmin || (Store && Store.isAdmin));
     }
 
     function loadGroupHistory() {
@@ -239,13 +245,14 @@ window.PortalHistory = (function() {
         document.getElementById('ghLoading').style.display = 'flex';
         document.getElementById('ghList').innerHTML = '';
 
-        callGasApi('groupHistory', 'getAllGroupHistory', {}, res => {
+        callGasApi('groupHistory', 'getAllGroupHistory', { userId: (Store && Store.currentUserId) || '' }, res => {
             ghLoading = false;
             document.getElementById('ghLoading').style.display = 'none';
             if (!res || res.success === false || !Array.isArray(res.historyList)) {
                 document.getElementById('ghList').innerHTML = `<div class="empty-panel"><div class="empty-title">無法讀取揪團大事記</div><div class="empty-desc">${escapeHtml((res && res.error) || '資料格式錯誤')}</div></div>`;
                 return;
             }
+            ghIsAdmin = Boolean(res.isAdmin || (Store && Store.isAdmin));
             ghRecords = res.historyList.map(normalizeGhRecord);
             Store.groupHistory = ghRecords;
             Store.groupHistoryLoaded = true;
@@ -298,6 +305,7 @@ window.PortalHistory = (function() {
         const kwL = kw.toLowerCase();
         const mbL = mb.toLowerCase();
         const isLatestCommentMode = ghState.status === 'latestComment';
+        const isHasAlbumMode = ghState.status === 'hasAlbum';
 
         const list = [];
         for (const rec of ghRecords) {
@@ -308,6 +316,8 @@ window.PortalHistory = (function() {
                 if (meta.activeCount === 0) continue;
                 latestCommentMs = meta.latestMs;
                 latestCommentFloor = meta.latestFloor;
+            } else if (isHasAlbumMode) {
+                if (!rec.albumFolderId) continue;
             } else if (ghState.status !== 'all' && rec.endType !== ghState.status) {
                 continue;
             }
@@ -371,13 +381,14 @@ window.PortalHistory = (function() {
             const sel = isSplitActive() && pos === ghSelectedPos;
             const totalFloors = Array.isArray(rec.comments) ? rec.comments.length : 0;
             const commentBadge = totalFloors > 0 ? `<span data-gh-cmt-count="${escapeHtml(rec.rowKey)}"> · 💬 ${totalFloors}</span>` : `<span data-gh-cmt-count="${escapeHtml(rec.rowKey)}"></span>`;
+            const albumBadge = `<span data-gh-album-badge="${escapeHtml(rec.rowKey)}">${rec.albumFolderId ? ' · 📷 相簿' : ''}</span>`;
 
             if (isCompact) {
                 html += `
                     <div class="history-row-item ${sel ? 'is-selected' : ''}" data-gh-pos="${pos}" onclick="PortalHistory.selectGhItem(${pos})">
                         <div class="history-row-main">
                             <div class="history-row-title">${highlight(rec.title, ghState.keyword)}</div>
-                            <div class="history-row-sub mono">${escapeHtml(rec.shortTime)} · 主揪 ${escapeHtml(rec.host)} · ${rec.joiners.length}人${commentBadge}</div>
+                            <div class="history-row-sub mono">${escapeHtml(rec.shortTime)} · 主揪 ${escapeHtml(rec.host)} · ${rec.joiners.length}人${commentBadge}${albumBadge}</div>
                         </div>
                         <span class="status-pill ${isEarly ? 'is-early' : 'is-done'}">${escapeHtml(rec.endType)}</span>
                     </div>`;
@@ -394,7 +405,7 @@ window.PortalHistory = (function() {
                             <span>👑 ${escapeHtml(rec.host)}</span>
                             <span>· 👥 ${rec.joiners.length} 人參加</span>
                             ${rec.locationName ? `<span>· 📍 ${escapeHtml(rec.locationName)}</span>` : ''}
-                            ${commentBadge}
+                            ${commentBadge}${albumBadge}
                         </div>
                     </article>`;
             }
@@ -825,8 +836,266 @@ window.PortalHistory = (function() {
         });
         document.getElementById(`${prefix}MemberChips`).innerHTML = chips;
 
+        renderGhAlbumSection(prefix, rec);
         renderGhCommentsSection(prefix, rec);
         refreshComments(prefix);
+    }
+
+    // =========================================================================
+    // Phase 2：大事記活動相簿檢視（共用 PortalAlbumViewer）＋ 管理群階層綁定
+    // =========================================================================
+    const ghPickerState = {
+        rec: null,
+        stack: [], // [{ id, name }]
+        currentFolderId: '',
+        currentFolderName: '',
+        currentHasMedia: false,
+        folders: [],
+        filterText: '',
+        busy: false
+    };
+
+    function renderGhAlbumSection(prefix, rec) {
+        const box = document.getElementById(`${prefix}AlbumBlock`);
+        if (!box || !rec) return;
+        const admin = isGhAdmin();
+        const hasAlbum = Boolean(rec.albumFolderId);
+
+        if (!hasAlbum && !admin) {
+            box.style.display = 'none';
+            box.innerHTML = '';
+            return;
+        }
+
+        box.style.display = 'block';
+        if (hasAlbum) {
+            box.innerHTML = `
+                <div class="gh-album-card">
+                    <div class="gh-album-card__info">
+                        <div class="gh-album-card__title">📷 活動聚會相簿</div>
+                        <div class="gh-album-card__sub">支援全螢幕雙指縮放、單張下載與批次打包 ZIP</div>
+                    </div>
+                    <div class="gh-album-card__actions">
+                        <button type="button" class="btn btn--primary btn--compact" onclick="PortalHistory.openRecAlbum('${prefix}')">🖼️ 檢視相簿</button>
+                        ${admin ? `<button type="button" class="btn btn--secondary btn--compact" onclick="PortalHistory.openAlbumPicker('${prefix}')">✏️ 更換相簿</button>` : ''}
+                    </div>
+                </div>`;
+        } else {
+            box.innerHTML = `
+                <div class="gh-album-card is-empty">
+                    <div class="gh-album-card__info">
+                        <div class="gh-album-card__title">📷 尚未綁定活動相簿</div>
+                        <div class="gh-album-card__sub">僅管理群可見：可從總資料夾選擇或直貼 Google Drive 連結</div>
+                    </div>
+                    <div class="gh-album-card__actions">
+                        <button type="button" class="btn btn--secondary btn--compact" onclick="PortalHistory.openAlbumPicker('${prefix}')">🔗 綁定相簿</button>
+                    </div>
+                </div>`;
+        }
+    }
+
+    function openRecAlbum(prefix) {
+        const st = ghCommentUi[prefix];
+        const rec = st && st.rec;
+        if (!rec || !rec.albumFolderId || !window.PortalAlbumViewer) return;
+        window.PortalAlbumViewer.open(rec.albumFolderId, {
+            name: rec.title,
+            displayDate: rec.shortTime
+        });
+    }
+
+    function openAlbumPicker(prefix) {
+        if (!isGhAdmin()) return;
+        const st = ghCommentUi[prefix];
+        const rec = st && st.rec;
+        if (!rec) return;
+
+        ghPickerState.rec = rec;
+        ghPickerState.stack = [];
+        ghPickerState.currentFolderId = '';
+        ghPickerState.currentFolderName = '';
+        ghPickerState.folders = [];
+        ghPickerState.filterText = '';
+        ghPickerState.busy = false;
+
+        const targetEl = document.getElementById('ghPickerTargetName');
+        const urlIn = document.getElementById('ghPickerUrlInput');
+        const filterIn = document.getElementById('ghPickerFilterInput');
+        const unbindBtn = document.getElementById('ghPickerUnbindBtn');
+        if (targetEl) targetEl.textContent = `目標活動：${rec.title}（${rec.shortTime}）`;
+        if (urlIn) urlIn.value = rec.albumFolderId ? `https://drive.google.com/drive/folders/${rec.albumFolderId}?usp=drive_link` : '';
+        if (filterIn) filterIn.value = '';
+        if (unbindBtn) unbindBtn.style.display = rec.albumFolderId ? 'inline-flex' : 'none';
+
+        const overlay = document.getElementById('ghAlbumPickerOverlay');
+        if (overlay) overlay.classList.add('is-open');
+        browseAlbumFolder('');
+    }
+
+    function closeAlbumPicker() {
+        if (ghPickerState.busy) return;
+        const overlay = document.getElementById('ghAlbumPickerOverlay');
+        if (overlay) overlay.classList.remove('is-open');
+    }
+
+    function browseAlbumFolder(folderId, crumbIndex) {
+        const listEl = document.getElementById('ghPickerFolderList');
+        const bindCurBtn = document.getElementById('ghPickerBindCurrentBtn');
+        if (listEl) listEl.innerHTML = '<div class="loading-inline" style="padding:18px;"><div class="spinner"></div><span>讀取資料夾清單中...</span></div>';
+        if (bindCurBtn) bindCurBtn.style.display = 'none';
+
+        callGasApi('groupHistory', 'listAlbumFolders', {
+            userId: (Store && Store.currentUserId) || '',
+            folderId: folderId || ''
+        }, res => {
+            if (!res || res.success === false) {
+                if (listEl) listEl.innerHTML = `<div style="padding:16px;color:var(--p-danger);font-size:0.86rem;">${escapeHtml((res && res.error) || '讀取資料夾失敗')}</div>`;
+                return;
+            }
+            ghPickerState.currentFolderId = res.folderId;
+            ghPickerState.currentFolderName = res.folderName || '總資料夾';
+            ghPickerState.currentHasMedia = Boolean(res.hasMedia);
+            ghPickerState.folders = Array.isArray(res.folders) ? res.folders : [];
+            ghPickerState.filterText = '';
+            const filterIn = document.getElementById('ghPickerFilterInput');
+            if (filterIn) filterIn.value = '';
+
+            if (typeof crumbIndex === 'number' && crumbIndex >= 0) {
+                ghPickerState.stack = ghPickerState.stack.slice(0, crumbIndex + 1);
+            } else if (res.isRoot || ghPickerState.stack.length === 0) {
+                ghPickerState.stack = [{ id: res.folderId, name: res.folderName || '總資料夾' }];
+            } else {
+                const exists = ghPickerState.stack.findIndex(s => s.id === res.folderId);
+                if (exists !== -1) ghPickerState.stack = ghPickerState.stack.slice(0, exists + 1);
+                else ghPickerState.stack.push({ id: res.folderId, name: res.folderName || '子資料夾' });
+            }
+
+            if (bindCurBtn) {
+                bindCurBtn.style.display = res.isRoot ? 'none' : 'inline-flex';
+            }
+            renderPickerBreadcrumb();
+            renderPickerFolderList();
+        }, err => {
+            if (listEl) listEl.innerHTML = `<div style="padding:16px;color:var(--p-danger);font-size:0.86rem;">連線失敗：${escapeHtml(err)}</div>`;
+        }, { preferGet: true });
+    }
+
+    function renderPickerBreadcrumb() {
+        const bc = document.getElementById('ghPickerBreadcrumb');
+        if (!bc) return;
+        bc.innerHTML = ghPickerState.stack.map((item, idx) => {
+            const sep = idx > 0 ? '<span>›</span>' : '';
+            return `${sep}<button type="button" class="gh-crumb-btn" onclick="PortalHistory.browseAlbumFolder('${escapeHtml(item.id)}', ${idx})">${idx === 0 ? '📁 ' : ''}${escapeHtml(item.name)}</button>`;
+        }).join('');
+    }
+
+    function filterPickerFolders(text) {
+        ghPickerState.filterText = String(text || '').trim().toLowerCase();
+        renderPickerFolderList();
+    }
+
+    function renderPickerFolderList() {
+        const listEl = document.getElementById('ghPickerFolderList');
+        if (!listEl) return;
+        const kw = ghPickerState.filterText;
+        const list = kw ? ghPickerState.folders.filter(f => String(f.name || '').toLowerCase().includes(kw)) : ghPickerState.folders;
+
+        if (!list.length) {
+            listEl.innerHTML = `<div style="padding:18px;text-align:center;color:var(--p-muted);font-size:0.84rem;">${ghPickerState.folders.length ? '沒有符合關鍵字的子資料夾' : (ghPickerState.currentHasMedia ? '此資料夾內已是照片檔案，請點擊上方「✅ 綁定此資料夾」' : '此資料夾沒有子資料夾')}</div>`;
+            return;
+        }
+
+        listEl.innerHTML = list.map(f => `
+            <div class="gh-folder-row">
+                <button type="button" class="gh-folder-enter-btn" onclick="PortalHistory.browseAlbumFolder('${escapeHtml(f.id)}')" title="進入 ${escapeHtml(f.name)}">
+                    <span>📁</span>
+                    <span>${escapeHtml(f.name)}</span>
+                </button>
+                <button type="button" class="btn btn--secondary btn--compact" onclick="PortalHistory.bindFolderId('${escapeHtml(f.id)}')">✅ 綁定</button>
+            </div>
+        `).join('');
+    }
+
+    function submitAlbumUrl() {
+        const val = (document.getElementById('ghPickerUrlInput') || {}).value || '';
+        if (!val.trim()) {
+            Swal.fire({ icon: 'warning', title: '請貼上資料夾連結', text: '或從下方總資料夾清單點選欲綁定的資料夾。', confirmButtonColor: '#3a6e59' });
+            return;
+        }
+        executeBindAlbum(val.trim());
+    }
+
+    function bindCurrentBrowsedFolder() {
+        if (!ghPickerState.currentFolderId) return;
+        executeBindAlbum(ghPickerState.currentFolderId);
+    }
+
+    function bindFolderId(folderId) {
+        if (!folderId) return;
+        executeBindAlbum(folderId);
+    }
+
+    function unbindCurrentAlbum() {
+        Swal.fire({
+            icon: 'warning',
+            title: '確定解除綁定相簿？',
+            text: '僅清除大事記與此資料夾的連結，不會刪除 Google Drive 內的任何照片。',
+            showCancelButton: true,
+            confirmButtonText: '確定解除',
+            cancelButtonText: '取消',
+            confirmButtonColor: '#dc2626'
+        }).then(r => {
+            if (r.isConfirmed) executeBindAlbum('');
+        });
+    }
+
+    function executeBindAlbum(folderInput) {
+        if (ghPickerState.busy || !ghPickerState.rec) return;
+        const rec = ghPickerState.rec;
+        ghPickerState.busy = true;
+        const btn = document.getElementById('ghPickerUrlBindBtn');
+        if (btn) btn.disabled = true;
+
+        callGasApi('groupHistory', 'bindHistoryAlbum', {
+            userId: (Store && Store.currentUserId) || '',
+            rowIndex: rec.rowIndex,
+            rowKey: rec.rowKey,
+            folderInput: folderInput
+        }, res => {
+            ghPickerState.busy = false;
+            if (btn) btn.disabled = false;
+            if (!res || res.success === false) {
+                Swal.fire({ icon: 'error', title: '綁定失敗', text: (res && res.error) || '請稍後再試', confirmButtonColor: '#3a6e59' });
+                return;
+            }
+            if (res.rowIndex) rec.rowIndex = res.rowIndex;
+            rec.albumFolderId = res.albumFolderId || '';
+
+            document.querySelectorAll('[data-gh-album-badge]').forEach(el => {
+                if (el.getAttribute('data-gh-album-badge') === rec.rowKey) {
+                    el.textContent = rec.albumFolderId ? ' · 📷 相簿' : '';
+                }
+            });
+            ['ghPane', 'ghSheet'].forEach(p => {
+                if (ghCommentUi[p].rec === rec) renderGhAlbumSection(p, rec);
+            });
+
+            closeAlbumPicker();
+            if (ghState.status === 'hasAlbum' && !rec.albumFolderId) {
+                applyGhFilters();
+            }
+            Swal.fire({
+                icon: 'success',
+                title: rec.albumFolderId ? '相簿綁定成功' : '已解除相簿綁定',
+                text: rec.albumFolderId ? `已連結：${res.folderName || rec.albumFolderId}` : '',
+                timer: 1800,
+                showConfirmButton: false
+            });
+        }, err => {
+            ghPickerState.busy = false;
+            if (btn) btn.disabled = false;
+            Swal.fire({ icon: 'error', title: '系統錯誤', text: String(err), confirmButtonColor: '#3a6e59' });
+        });
     }
 
     function renderGhPane(pos) {
@@ -1024,6 +1293,15 @@ window.PortalHistory = (function() {
         cancelEditComment,
         saveEditComment,
         deleteComment,
+        openRecAlbum,
+        openAlbumPicker,
+        closeAlbumPicker,
+        browseAlbumFolder,
+        filterPickerFolders,
+        submitAlbumUrl,
+        bindCurrentBrowsedFolder,
+        bindFolderId,
+        unbindCurrentAlbum,
         setLhViewMode,
         renderNextLhBatch
     };
