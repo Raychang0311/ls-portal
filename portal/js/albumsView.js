@@ -1,21 +1,43 @@
 /**
- * L>S Portal — 相簿備份分頁（三縮圖立體堆疊卡片格線、正反向排序、分類篩選）
+ * L>S Portal — 相簿備份分頁（三縮圖立體堆疊卡片格線、最新／最舊排序、本地快取秒開）
  */
 window.PortalAlbums = (function() {
     const { Store, callGasApi, escapeHtml, escapeHtmlAttr } = window.PortalApi;
+    const LOCAL_CACHE_KEY = 'ls_portal_albums_idx_v2';
+    const LOCAL_CACHE_STALE_MS = 10 * 60 * 1000;
 
     let bound = false;
     let loading = false;
     let loaded = false;
     let albums = [];
-    let categories = [];
     let rootFolderUrl = 'https://drive.google.com/drive/folders/1oFKQ9eJ4vwbSOUkQcVVw1890juvt5eDD?usp=drive_link';
 
     const state = {
         keyword: '',
-        category: 'all',
         sortOrder: 'newest' // 'newest' | 'oldest'
     };
+
+    function readLocalCache() {
+        try {
+            const raw = localStorage.getItem(LOCAL_CACHE_KEY);
+            if (!raw) return null;
+            const parsed = JSON.parse(raw);
+            if (!parsed || !Array.isArray(parsed.albums)) return null;
+            return parsed;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    function writeLocalCache(list, rootUrl) {
+        try {
+            localStorage.setItem(LOCAL_CACHE_KEY, JSON.stringify({
+                savedAt: Date.now(),
+                rootFolderUrl: rootUrl || rootFolderUrl,
+                albums: list
+            }));
+        } catch (e) {}
+    }
 
     function ensureLoaded() {
         bindEvents();
@@ -23,7 +45,27 @@ window.PortalAlbums = (function() {
             renderGrid();
             return;
         }
-        loadGallery(false);
+        const cached = readLocalCache();
+        if (cached && cached.albums.length > 0) {
+            loaded = true;
+            albums = cached.albums;
+            if (cached.rootFolderUrl) rootFolderUrl = cached.rootFolderUrl;
+            syncRootLink();
+            renderGrid();
+            if (Date.now() - (cached.savedAt || 0) > LOCAL_CACHE_STALE_MS) {
+                loadGallery(false, true);
+            }
+            return;
+        }
+        loadGallery(false, false);
+    }
+
+    function syncRootLink() {
+        const rootBtn = document.getElementById('albumsOpenRootBtn');
+        if (rootBtn) {
+            rootBtn.href = rootFolderUrl;
+            rootBtn.onclick = e => window.PortalApi.openExternalUrl(e, rootFolderUrl);
+        }
     }
 
     function bindEvents() {
@@ -32,7 +74,6 @@ window.PortalAlbums = (function() {
 
         const searchIn = document.getElementById('albumsSearchInput');
         const clearBtn = document.getElementById('albumsClearSearchBtn');
-        const sortBtn = document.getElementById('albumsSortToggleBtn');
 
         if (searchIn) {
             searchIn.addEventListener('input', () => {
@@ -52,16 +93,19 @@ window.PortalAlbums = (function() {
                 renderGrid();
             });
         }
-        if (sortBtn) {
-            sortBtn.addEventListener('click', () => {
-                state.sortOrder = state.sortOrder === 'newest' ? 'oldest' : 'newest';
-                sortBtn.textContent = state.sortOrder === 'newest' ? '最新 ▾' : '最舊 ▴';
-                renderGrid();
-            });
-        }
     }
 
-    function loadGallery(forceRefresh) {
+    function setSortOrder(order) {
+        const next = order === 'oldest' ? 'oldest' : 'newest';
+        if (state.sortOrder === next) return;
+        state.sortOrder = next;
+        document.querySelectorAll('#albumsSortChips [data-album-sort]').forEach(btn => {
+            btn.classList.toggle('is-active', btn.dataset.albumSort === next);
+        });
+        renderGrid();
+    }
+
+    function loadGallery(forceRefresh, silent) {
         if (loading) return;
         loading = true;
 
@@ -69,8 +113,10 @@ window.PortalAlbums = (function() {
         const gridEl = document.getElementById('albumsGrid');
         const refreshBtn = document.getElementById('albumsRefreshBtn');
 
-        if (loadingEl) loadingEl.style.display = 'flex';
-        if (gridEl) gridEl.innerHTML = '';
+        if (!silent) {
+            if (loadingEl) loadingEl.style.display = 'flex';
+            if (gridEl && !albums.length) gridEl.innerHTML = '';
+        }
         if (refreshBtn) refreshBtn.classList.add('is-spinning');
 
         callGasApi('groupHistory', 'getAlbumGalleryIndex', {
@@ -81,7 +127,7 @@ window.PortalAlbums = (function() {
             if (refreshBtn) refreshBtn.classList.remove('is-spinning');
 
             if (!res || res.success === false || !Array.isArray(res.albums)) {
-                if (gridEl) {
+                if (!silent && gridEl && !albums.length) {
                     gridEl.innerHTML = `<div class="empty-panel" style="grid-column:1/-1;"><div class="empty-emoji">⚠️</div><div class="empty-title">無法讀取相簿總覽</div><div class="empty-desc">${escapeHtml((res && res.error) || '請確認 groupHistory.js 已更新部署且總資料夾權限已開啟')}</div></div>`;
                 }
                 return;
@@ -89,51 +135,26 @@ window.PortalAlbums = (function() {
 
             loaded = true;
             albums = res.albums;
-            categories = Array.isArray(res.categories) ? res.categories : [];
             if (res.rootFolderUrl) rootFolderUrl = res.rootFolderUrl;
             if (Store) {
                 Store.albums = albums;
                 Store.albumsLoaded = true;
             }
-
-            const rootBtn = document.getElementById('albumsOpenRootBtn');
-            if (rootBtn) {
-                rootBtn.href = rootFolderUrl;
-                rootBtn.onclick = e => window.PortalApi.openExternalUrl(e, rootFolderUrl);
-            }
-
-            renderCategoryChips();
+            writeLocalCache(albums, rootFolderUrl);
+            syncRootLink();
             renderGrid();
         }, err => {
             loading = false;
             if (loadingEl) loadingEl.style.display = 'none';
             if (refreshBtn) refreshBtn.classList.remove('is-spinning');
-            if (gridEl) {
+            if (!silent && gridEl && !albums.length) {
                 gridEl.innerHTML = `<div class="empty-panel" style="grid-column:1/-1;"><div class="empty-emoji">⚠️</div><div class="empty-title">連線後端失敗</div><div class="empty-desc">${escapeHtml(err)}</div></div>`;
             }
         }, { preferGet: true });
     }
 
     function refresh() {
-        loadGallery(true);
-    }
-
-    function setCategory(cat) {
-        state.category = cat || 'all';
-        renderCategoryChips();
-        renderGrid();
-    }
-
-    function renderCategoryChips() {
-        const bar = document.getElementById('albumsCategoryChips');
-        if (!bar) return;
-
-        const allCats = ['all'].concat(categories);
-        bar.innerHTML = allCats.map(cat => {
-            const label = cat === 'all' ? '全部分類' : cat;
-            const active = state.category === cat ? 'is-active' : '';
-            return `<button type="button" class="chip-btn ${active}" data-album-cat="${escapeHtmlAttr(cat)}" onclick="PortalAlbums.setCategory(this.dataset.albumCat)">${escapeHtml(label)}</button>`;
-        }).join('');
+        loadGallery(true, false);
     }
 
     function buildStackLayerHtml(fileId, layerCls, altText) {
@@ -154,13 +175,8 @@ window.PortalAlbums = (function() {
 
         const kwL = state.keyword.toLowerCase();
         const filtered = albums.filter(a => {
-            if (state.category !== 'all' && a.category !== state.category) return false;
-            if (kwL) {
-                const hitName = String(a.name || '').toLowerCase().includes(kwL);
-                const hitCat = String(a.category || '').toLowerCase().includes(kwL);
-                if (!hitName && !hitCat) return false;
-            }
-            return true;
+            if (!kwL) return true;
+            return String(a.name || '').toLowerCase().includes(kwL);
         });
 
         filtered.sort((a, b) => {
@@ -170,9 +186,8 @@ window.PortalAlbums = (function() {
             return state.sortOrder === 'oldest' ? -nameCmp : nameCmp;
         });
 
-        const isFiltered = Boolean(kwL || state.category !== 'all');
         if (countPill) {
-            countPill.textContent = isFiltered ? `符合 ${filtered.length} / ${albums.length} 本` : `共 ${albums.length} 本相簿`;
+            countPill.textContent = kwL ? `符合 ${filtered.length} / ${albums.length} 本` : `共 ${albums.length} 本相簿`;
         }
 
         if (!filtered.length) {
@@ -185,7 +200,6 @@ window.PortalAlbums = (function() {
             const frontId = ids[0] || '';
             const midId = ids[1] || '';
             const backId = ids[2] || '';
-            const metaText = [a.displayDate, `${a.mediaCount || 0} 張`].filter(Boolean).join(' · ');
 
             return `
                 <button type="button"
@@ -199,9 +213,8 @@ window.PortalAlbums = (function() {
                         ${buildStackLayerHtml(frontId, 'is-front', a.name)}
                     </div>
                     <div class="album-stack-meta">
-                        <span class="album-cat-pill">${escapeHtml(a.category || '未分類')}</span>
                         <div class="album-stack-title">${escapeHtml(a.name)}</div>
-                        <div class="album-stack-sub mono">${escapeHtml(metaText)}</div>
+                        ${a.displayDate ? `<div class="album-stack-sub mono">${escapeHtml(a.displayDate)}</div>` : ''}
                     </div>
                 </button>`;
         }).join('');
@@ -216,7 +229,7 @@ window.PortalAlbums = (function() {
     return {
         ensureLoaded,
         refresh,
-        setCategory,
+        setSortOrder,
         openAlbum
     };
 })();
