@@ -885,7 +885,7 @@ window.PortalHistory = (function() {
                 <div class="gh-album-card is-empty">
                     <div class="gh-album-card__info">
                         <div class="gh-album-card__title">📷 尚未綁定活動相簿</div>
-                        <div class="gh-album-card__sub">僅管理群可見：可從總資料夾選擇或直貼 Google Drive 連結</div>
+                        <div class="gh-album-card__sub">僅管理群可見：可從總資料夾清單中選擇對應活動相簿</div>
                     </div>
                     <div class="gh-album-card__actions">
                         <button type="button" class="btn btn--secondary btn--compact" onclick="PortalHistory.openAlbumPicker('${prefix}')">🔗 綁定相簿</button>
@@ -919,11 +919,9 @@ window.PortalHistory = (function() {
         ghPickerState.busy = false;
 
         const targetEl = document.getElementById('ghPickerTargetName');
-        const urlIn = document.getElementById('ghPickerUrlInput');
         const filterIn = document.getElementById('ghPickerFilterInput');
         const unbindBtn = document.getElementById('ghPickerUnbindBtn');
         if (targetEl) targetEl.textContent = `目標活動：${rec.title}（${rec.shortTime}）`;
-        if (urlIn) urlIn.value = rec.albumFolderId ? `https://drive.google.com/drive/folders/${rec.albumFolderId}?usp=drive_link` : '';
         if (filterIn) filterIn.value = '';
         if (unbindBtn) unbindBtn.style.display = rec.albumFolderId ? 'inline-flex' : 'none';
 
@@ -984,20 +982,6 @@ window.PortalHistory = (function() {
                 <button type="button" class="btn btn--secondary btn--compact" onclick="PortalHistory.bindFolderId('${escapeHtml(f.id)}')">✅ 綁定</button>
             </div>
         `).join('');
-    }
-
-    function submitAlbumUrl() {
-        const val = (document.getElementById('ghPickerUrlInput') || {}).value || '';
-        if (!val.trim()) {
-            Swal.fire({ icon: 'warning', title: '請貼上資料夾連結', text: '或從下方總資料夾清單點選欲綁定的資料夾。', confirmButtonColor: '#3a6e59' });
-            return;
-        }
-        executeBindAlbum(val.trim());
-    }
-
-    function bindCurrentBrowsedFolder() {
-        if (!ghPickerState.currentFolderId) return;
-        executeBindAlbum(ghPickerState.currentFolderId);
     }
 
     function bindFolderId(folderId) {
@@ -1268,8 +1252,6 @@ window.PortalHistory = (function() {
         closeAlbumPicker,
         browseAlbumFolder,
         filterPickerFolders,
-        submitAlbumUrl,
-        bindCurrentBrowsedFolder,
         bindFolderId,
         unbindCurrentAlbum,
         setLhViewMode,
