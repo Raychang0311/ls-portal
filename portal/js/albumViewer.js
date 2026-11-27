@@ -5,7 +5,7 @@
 window.PortalAlbumViewer = (function() {
     const { callGasApi, escapeHtml, escapeHtmlAttr, openExternalUrl } = window.PortalApi;
 
-    const MAX_BATCH_SELECT = 20;
+    const MAX_BATCH_SELECT = 15;
     const albumCache = new Map();
 
     let currentFolderId = '';
@@ -502,26 +502,23 @@ window.PortalAlbumViewer = (function() {
         }
     }
 
-    function fetchSingleBlobAsync(fileId) {
+    function createCloudZipAsync(fileIds, albumName) {
         return new Promise((resolve, reject) => {
-            callGasApi('groupHistory', 'getAlbumFileBlob', { fileId: fileId }, res => {
-                if (res && res.success && res.base64) {
+            callGasApi('groupHistory', 'createAlbumZip', {
+                fileIds: fileIds,
+                albumName: albumName
+            }, res => {
+                if (res && res.success && res.downloadUrl) {
                     resolve(res);
                 } else {
-                    reject(new Error((res && res.error) || '讀取圖片失敗'));
+                    reject(new Error((res && res.error) || '雲端打包失敗'));
                 }
-            }, err => reject(new Error(String(err || '連線失敗'))), { preferGet: true });
+            }, err => reject(new Error(String(err || '連線失敗'))));
         });
     }
 
     async function downloadSelectedBatch() {
         if (batchBusy || selectedIds.size === 0 || !currentAlbum) return;
-        if (typeof window.JSZip === 'undefined') {
-            if (window.Swal) {
-                Swal.fire({ icon: 'error', title: '打包元件尚未載入', text: '請重新整理頁面後再試，或點擊「📂 Drive 原資料夾」直接下載。', confirmButtonColor: '#3a6e59' });
-            }
-            return;
-        }
 
         const targets = (currentAlbum.items || []).filter(i => !i.isVideo && selectedIds.has(i.id));
         if (!targets.length) return;
@@ -530,76 +527,38 @@ window.PortalAlbumViewer = (function() {
         updateBatchBar();
 
         const progressEl = document.getElementById('albumBatchProgress');
-        const setProgress = msg => {
-            if (progressEl) {
-                progressEl.style.display = 'block';
-                progressEl.textContent = msg;
-            }
-        };
+        if (progressEl) {
+            progressEl.style.display = 'block';
+            progressEl.textContent = `正在雲端打包 ${targets.length} 張原圖為 ZIP，請稍候...`;
+        }
 
         try {
-            const zip = new window.JSZip();
-            const usedNames = new Set();
-            let done = 0;
-            let failed = 0;
-            const queue = targets.slice();
+            const res = await createCloudZipAsync(
+                targets.map(t => t.id),
+                currentAlbum.folderName || (currentMeta && currentMeta.name) || 'LS_Album'
+            );
 
-            const worker = async () => {
-                while (queue.length > 0) {
-                    const item = queue.shift();
-                    setProgress(`正在抓取原圖 ${done + 1} / ${targets.length}...`);
-                    try {
-                        const res = await fetchSingleBlobAsync(item.id);
-                        let fname = String(res.name || item.name || (item.id + '.jpg')).replace(/[\\/:*?"<>|]/g, '_');
-                        if (usedNames.has(fname)) {
-                            const dot = fname.lastIndexOf('.');
-                            const base = dot > 0 ? fname.slice(0, dot) : fname;
-                            const ext = dot > 0 ? fname.slice(dot) : '.jpg';
-                            fname = `${base}_${item.id.slice(0, 5)}${ext}`;
-                        }
-                        usedNames.add(fname);
-                        zip.file(fname, res.base64, { base64: true });
-                    } catch (e) {
-                        failed++;
-                    } finally {
-                        done++;
-                        setProgress(`正在抓取原圖 ${done} / ${targets.length}${failed > 0 ? `（${failed} 張略過）` : ''}...`);
-                    }
-                }
-            };
-
-            const concurrency = Math.min(2, targets.length);
-            await Promise.all(Array.from({ length: concurrency }, () => worker()));
-
-            const packedCount = usedNames.size;
-            if (packedCount === 0) {
-                throw new Error('所有勾選圖片皆無法讀取，請改用單張下載或前往 Drive 原資料夾。');
-            }
-
-            setProgress(`正在壓縮打包 ${packedCount} 張相片...`);
-            const zipBlob = await zip.generateAsync({ type: 'blob' });
-            const safeAlbumName = String((currentAlbum.folderName || 'album')).replace(/[\\/:*?"<>|]/g, '_').slice(0, 40);
-            const zipFilename = `${safeAlbumName}_${packedCount}張.zip`;
-
-            const url = URL.createObjectURL(zipBlob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = zipFilename;
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-            setTimeout(() => URL.revokeObjectURL(url), 10000);
+            const dlUrl = res.downloadUrl;
+            const noteText = res.skippedCount > 0
+                ? `成功打包 ${res.packedCount} 張（另有 ${res.skippedCount} 張因超過 25MB 總上限略過）。`
+                : `已打包 ${res.packedCount} 張原圖（${res.zipName || 'album.zip'}），點擊下方按鈕將以外部瀏覽器下載：`;
 
             if (window.Swal) {
-                const isLine = /Line\//i.test(navigator.userAgent || '');
+                const safeUrl = escapeHtmlAttr(dlUrl);
                 Swal.fire({
                     icon: 'success',
-                    title: `已完成打包 (${packedCount} 張)`,
-                    text: isLine
-                        ? '已觸發 ZIP 下載；若 LINE 內建瀏覽器未自動存檔，建議點右上角以「預設瀏覽器開啟」或直接點擊「📂 Drive 原資料夾」。'
-                        : (failed > 0 ? `成功打包 ${packedCount} 張，另有 ${failed} 張因超過 12MB 或讀取失敗已略過。` : `已下載 ${zipFilename}`),
-                    confirmButtonColor: '#3a6e59'
+                    title: `ZIP 打包完成 (${res.packedCount} 張)`,
+                    html: `<p style="margin:0 0 14px;font-size:0.9rem;color:#475569;line-height:1.55;">${escapeHtml(noteText)}</p>
+                           <a href="${safeUrl}" target="_blank" rel="noopener noreferrer"
+                              onclick="PortalApi.openExternalUrl(event, this.href)"
+                              style="display:inline-flex;align-items:center;justify-content:center;gap:6px;width:100%;min-height:44px;border-radius:12px;background:#3a6e59;color:#ffffff;font-weight:700;font-size:0.95rem;text-decoration:none;">
+                              ⬇️ 立即下載 ZIP 檔
+                           </a>`,
+                    showConfirmButton: false,
+                    showCloseButton: true
                 });
+            } else {
+                openExternalUrl(null, dlUrl);
             }
         } catch (err) {
             if (window.Swal) {
