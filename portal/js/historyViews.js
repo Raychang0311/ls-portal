@@ -938,55 +938,25 @@ window.PortalHistory = (function() {
         if (overlay) overlay.classList.remove('is-open');
     }
 
-    function browseAlbumFolder(folderId, crumbIndex) {
+    function browseAlbumFolder() {
         const listEl = document.getElementById('ghPickerFolderList');
-        const bindCurBtn = document.getElementById('ghPickerBindCurrentBtn');
-        if (listEl) listEl.innerHTML = '<div class="loading-inline" style="padding:18px;"><div class="spinner"></div><span>讀取資料夾清單中...</span></div>';
-        if (bindCurBtn) bindCurBtn.style.display = 'none';
+        if (listEl) listEl.innerHTML = '<div class="loading-inline" style="padding:18px;"><div class="spinner"></div><span>讀取相簿清單中...</span></div>';
 
         callGasApi('groupHistory', 'listAlbumFolders', {
-            userId: (Store && Store.currentUserId) || '',
-            folderId: folderId || ''
+            userId: (Store && Store.currentUserId) || ''
         }, res => {
             if (!res || res.success === false) {
-                if (listEl) listEl.innerHTML = `<div style="padding:16px;color:var(--p-danger);font-size:0.86rem;">${escapeHtml((res && res.error) || '讀取資料夾失敗')}</div>`;
+                if (listEl) listEl.innerHTML = `<div style="padding:16px;color:var(--p-danger);font-size:0.86rem;">${escapeHtml((res && res.error) || '讀取相簿清單失敗')}</div>`;
                 return;
             }
-            ghPickerState.currentFolderId = res.folderId;
-            ghPickerState.currentFolderName = res.folderName || '總資料夾';
-            ghPickerState.currentHasMedia = Boolean(res.hasMedia);
             ghPickerState.folders = Array.isArray(res.folders) ? res.folders : [];
             ghPickerState.filterText = '';
             const filterIn = document.getElementById('ghPickerFilterInput');
             if (filterIn) filterIn.value = '';
-
-            if (typeof crumbIndex === 'number' && crumbIndex >= 0) {
-                ghPickerState.stack = ghPickerState.stack.slice(0, crumbIndex + 1);
-            } else if (res.isRoot || ghPickerState.stack.length === 0) {
-                ghPickerState.stack = [{ id: res.folderId, name: res.folderName || '總資料夾' }];
-            } else {
-                const exists = ghPickerState.stack.findIndex(s => s.id === res.folderId);
-                if (exists !== -1) ghPickerState.stack = ghPickerState.stack.slice(0, exists + 1);
-                else ghPickerState.stack.push({ id: res.folderId, name: res.folderName || '子資料夾' });
-            }
-
-            if (bindCurBtn) {
-                bindCurBtn.style.display = res.isRoot ? 'none' : 'inline-flex';
-            }
-            renderPickerBreadcrumb();
             renderPickerFolderList();
         }, err => {
             if (listEl) listEl.innerHTML = `<div style="padding:16px;color:var(--p-danger);font-size:0.86rem;">連線失敗：${escapeHtml(err)}</div>`;
         }, { preferGet: true });
-    }
-
-    function renderPickerBreadcrumb() {
-        const bc = document.getElementById('ghPickerBreadcrumb');
-        if (!bc) return;
-        bc.innerHTML = ghPickerState.stack.map((item, idx) => {
-            const sep = idx > 0 ? '<span>›</span>' : '';
-            return `${sep}<button type="button" class="gh-crumb-btn" onclick="PortalHistory.browseAlbumFolder('${escapeHtml(item.id)}', ${idx})">${idx === 0 ? '📁 ' : ''}${escapeHtml(item.name)}</button>`;
-        }).join('');
     }
 
     function filterPickerFolders(text) {
@@ -1001,16 +971,16 @@ window.PortalHistory = (function() {
         const list = kw ? ghPickerState.folders.filter(f => String(f.name || '').toLowerCase().includes(kw)) : ghPickerState.folders;
 
         if (!list.length) {
-            listEl.innerHTML = `<div style="padding:18px;text-align:center;color:var(--p-muted);font-size:0.84rem;">${ghPickerState.folders.length ? '沒有符合關鍵字的子資料夾' : (ghPickerState.currentHasMedia ? '此資料夾內已是照片檔案，請點擊上方「✅ 綁定此資料夾」' : '此資料夾沒有子資料夾')}</div>`;
+            listEl.innerHTML = `<div style="padding:18px;text-align:center;color:var(--p-muted);font-size:0.84rem;">${ghPickerState.folders.length ? '沒有符合關鍵字的相簿資料夾' : '總資料夾內目前沒有相簿資料夾'}</div>`;
             return;
         }
 
         listEl.innerHTML = list.map(f => `
             <div class="gh-folder-row">
-                <button type="button" class="gh-folder-enter-btn" onclick="PortalHistory.browseAlbumFolder('${escapeHtml(f.id)}')" title="進入 ${escapeHtml(f.name)}">
+                <div class="gh-folder-enter-btn" style="cursor:default;" title="${escapeHtml(f.name)}">
                     <span>📁</span>
                     <span>${escapeHtml(f.name)}</span>
-                </button>
+                </div>
                 <button type="button" class="btn btn--secondary btn--compact" onclick="PortalHistory.bindFolderId('${escapeHtml(f.id)}')">✅ 綁定</button>
             </div>
         `).join('');
