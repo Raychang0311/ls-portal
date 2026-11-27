@@ -1139,14 +1139,9 @@
             <button type="button" id="ghPickerUrlBindBtn" class="btn btn--primary btn--compact" onclick="PortalHistory.submitAlbumUrl()">綁定</button>
         </div>
 
-        <div class="gh-picker-browse-head">
-            <div id="ghPickerBreadcrumb" class="gh-folder-breadcrumb"></div>
-            <button type="button" id="ghPickerBindCurrentBtn" class="btn btn--secondary btn--compact" style="display: none;" onclick="PortalHistory.bindCurrentBrowsedFolder()">✅ 綁定此資料夾</button>
-        </div>
-
         <div class="input-wrap" style="margin-bottom: 4px;">
             <span class="input-icon" aria-hidden="true">🔍</span>
-            <input type="text" id="ghPickerFilterInput" class="field-input" placeholder="過濾目前資料夾內的子資料夾..." oninput="PortalHistory.filterPickerFolders(this.value)" autocomplete="off">
+            <input type="text" id="ghPickerFilterInput" class="field-input" placeholder="搜尋總資料夾內的相簿名稱..." oninput="PortalHistory.filterPickerFolders(this.value)" autocomplete="off">
         </div>
 
         <div id="ghPickerFolderList" class="gh-folder-list"></div>
@@ -1165,7 +1160,7 @@
 <script src="./portal/js/groupDetail.js?v=20261124"></script>
 <script src="./portal/js/groupForm.js"></script>
 <script src="./portal/js/membersView.js"></script>
-<script src="./portal/js/historyViews.js?v=20261127c"></script>
+<script src="./portal/js/historyViews.js?v=20261127d"></script>
 <script src="./portal/js/albumViewer.js?v=20261127b"></script>
 <script src="./portal/js/albumsView.js?v=20261127b"></script>
 <script src="./portal/js/otherView.js"></script>
