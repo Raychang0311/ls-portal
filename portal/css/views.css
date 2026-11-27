@@ -2793,3 +2793,151 @@ mark.hl {
   gap: 10px;
   flex-wrap: wrap;
 }
+
+
+/* ============================================================================
+   8. 揪團大事記相簿卡片與管理群階層綁定彈窗
+   ============================================================================ */
+.gh-album-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: var(--r-md);
+  background: var(--p-accent-soft);
+  border: 1px solid color-mix(in oklab, var(--p-accent) 28%, transparent);
+}
+
+.gh-album-card.is-empty {
+  background: var(--p-surface-tint);
+  border-color: var(--line);
+}
+
+.gh-album-card__info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.gh-album-card__title {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--p-ink);
+}
+
+.gh-album-card__sub {
+  font-size: 0.78rem;
+  color: var(--p-muted);
+}
+
+.gh-album-card__actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.gh-picker-panel {
+  max-width: 560px;
+}
+
+.gh-picker-target {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--p-action);
+  background: var(--p-accent-soft);
+  padding: 6px 10px;
+  border-radius: var(--r-sm);
+}
+
+.gh-picker-url-row {
+  display: flex;
+  gap: 8px;
+}
+
+.gh-picker-url-row .field-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.gh-picker-browse-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.gh-folder-breadcrumb {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: var(--p-muted);
+}
+
+.gh-crumb-btn {
+  border: none;
+  background: var(--p-surface-tint);
+  color: var(--p-ink);
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.gh-crumb-btn:hover {
+  background: var(--p-accent-soft);
+  color: var(--p-action);
+}
+
+.gh-folder-list {
+  max-height: 280px;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--p-surface);
+  display: flex;
+  flex-direction: column;
+}
+
+.gh-folder-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.gh-folder-row:last-child {
+  border-bottom: none;
+}
+
+.gh-folder-enter-btn {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  text-align: left;
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--p-ink);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gh-folder-enter-btn:hover {
+  color: var(--p-action);
+}
