@@ -70,6 +70,11 @@ window.PortalApp = (function() {
                 window.PortalAlbumViewer.closeLightbox();
                 return;
             }
+            const albumPicker = document.getElementById('ghAlbumPickerOverlay');
+            if (albumPicker && albumPicker.classList.contains('is-open')) {
+                window.PortalHistory.closeAlbumPicker();
+                return;
+            }
             const albumViewer = document.getElementById('albumViewerOverlay');
             if (albumViewer && albumViewer.classList.contains('is-open')) {
                 window.PortalAlbumViewer.close();
