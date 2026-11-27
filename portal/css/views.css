@@ -2665,6 +2665,9 @@ mark.hl {
   align-items: center;
   justify-content: center;
   padding: 12px 0;
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
 }
 
 .album-lb-img-wrap {
@@ -2675,14 +2678,71 @@ mark.hl {
   gap: 12px;
   max-width: 100%;
   max-height: 100%;
+  touch-action: none;
 }
 
 .album-lb-img-wrap img {
   max-width: min(92vw, 1080px);
-  max-height: calc(100vh - 180px);
+  max-height: calc(100vh - 190px);
   border-radius: var(--r-md);
   object-fit: contain;
   box-shadow: 0 20px 44px rgba(0, 0, 0, 0.45);
+  transform-origin: center center;
+  will-change: transform;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  cursor: zoom-in;
+}
+
+.album-lb-img-wrap img.is-zoomed {
+  cursor: grab;
+}
+
+.album-lb-img-wrap img.is-dragging {
+  cursor: grabbing;
+}
+
+.album-lb-zoom-group {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+
+.album-lb-zoom-btn,
+.album-lb-zoom-pct {
+  border: none;
+  background: transparent;
+  color: #ffffff;
+  font-family: inherit;
+  min-height: 36px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.album-lb-zoom-btn {
+  width: 36px;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.album-lb-zoom-pct {
+  min-width: 54px;
+  padding: 0 6px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  border-left: 1px solid rgba(255, 255, 255, 0.16);
+  border-right: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.album-lb-zoom-btn:hover,
+.album-lb-zoom-pct:hover {
+  background: rgba(255, 255, 255, 0.16);
 }
 
 .album-lb-video-btn {
