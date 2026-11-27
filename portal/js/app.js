@@ -3,7 +3,7 @@
  */
 window.PortalApp = (function() {
     const { extractQueryParam } = window.PortalApi;
-    const VALID_TABS = ['groups', 'members', 'groupHistory', 'leftHistory', 'other'];
+    const VALID_TABS = ['groups', 'members', 'groupHistory', 'albums', 'leftHistory', 'other'];
     let currentTab = 'groups';
     let deepLinkHandled = false;
     let portalStarted = false;
@@ -61,8 +61,20 @@ window.PortalApp = (function() {
             syncTabIndicator('#memberQuickFilters', '.filter-tab.is-active');
         }, { passive: true });
 
+        window.addEventListener('scroll', updateBackToTopVisibility, { passive: true });
+
         document.addEventListener('keydown', e => {
             if (e.key !== 'Escape') return;
+            const albumLb = document.getElementById('albumLightbox');
+            if (albumLb && albumLb.classList.contains('active')) {
+                window.PortalAlbumViewer.closeLightbox();
+                return;
+            }
+            const albumViewer = document.getElementById('albumViewerOverlay');
+            if (albumViewer && albumViewer.classList.contains('is-open')) {
+                window.PortalAlbumViewer.close();
+                return;
+            }
             const lightbox = document.getElementById('imgLightbox');
             if (lightbox && lightbox.classList.contains('active')) {
                 window.PortalProfile.closeImgLightbox();
@@ -133,6 +145,7 @@ window.PortalApp = (function() {
         if (tabKey === 'members') syncTabIndicator('#memberQuickFilters', '.filter-tab.is-active');
 
         if (tabKey === 'groupHistory') window.PortalHistory.ensureGroupHistoryLoaded();
+        if (tabKey === 'albums' && window.PortalAlbums) window.PortalAlbums.ensureLoaded();
         if (tabKey === 'leftHistory') window.PortalHistory.ensureLeftHistoryLoaded();
         if (tabKey === 'other' && window.PortalOther) window.PortalOther.ensureLoaded();
 
@@ -142,6 +155,18 @@ window.PortalApp = (function() {
             } catch (e) {}
         }
         window.scrollTo({ top: 0, behavior: 'auto' });
+        updateBackToTopVisibility();
+    }
+
+    function updateBackToTopVisibility() {
+        const btn = document.getElementById('portalBackToTopBtn');
+        if (!btn) return;
+        const y = window.scrollY || document.documentElement.scrollTop || 0;
+        btn.classList.toggle('is-visible', y > 360);
+    }
+
+    function scrollToTop() {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     /**
@@ -191,6 +216,7 @@ window.PortalApp = (function() {
         switchTab,
         syncTabIndicator,
         handleDeepLinkSeqId,
+        scrollToTop,
         getCurrentTab: () => currentTab
     };
 })();

@@ -15,14 +15,15 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
 
-    <link rel="stylesheet" href="./portal/css/portal.css?v=20261124">
+    <link rel="stylesheet" href="./portal/css/portal.css?v=20261127">
     <link rel="stylesheet" href="./portal/css/jukebox.css">
-    <link rel="stylesheet" href="./portal/css/views.css?v=20261124">
+    <link rel="stylesheet" href="./portal/css/views.css?v=20261127">
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/zh-tw.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
 <body>
@@ -72,6 +73,9 @@
             </button>
             <button type="button" class="nav__tab tab" data-tab="groupHistory" onclick="PortalApp.switchTab('groupHistory')">
                 <span>揪團大事記</span>
+            </button>
+            <button type="button" class="nav__tab tab" data-tab="albums" onclick="PortalApp.switchTab('albums')">
+                <span>相簿備份</span>
             </button>
             <button type="button" class="nav__tab tab" data-tab="leftHistory" onclick="PortalApp.switchTab('leftHistory')">
                 <span>退群紀錄</span>
@@ -507,7 +511,58 @@
             </div>
         </div>
     </section>
+
+    <!-- ================================================================
+         TAB 6: 相簿備份（三縮圖立體堆疊格線 + 共用相片瀏覽與批次下載）
+         ================================================================ -->
+    <section id="view-albums" class="portal-view" aria-labelledby="albumsViewTitle" hidden>
+        <div class="wrap">
+            <div class="section-head">
+                <div class="section-head__titles">
+                    <div class="eyebrow-row">
+                        <span class="eyebrow-tag">ARCHIVE · PHOTO ALBUMS</span>
+                        <span class="mono count-pill" id="albumsCountPill">待載入</span>
+                    </div>
+                    <h1 id="albumsViewTitle" class="page-h1">相簿備份 <span class="muted">翻閱每一次聚會的珍貴合照。</span></h1>
+                </div>
+                <div class="section-head__actions">
+                    <button type="button" id="albumsRefreshBtn" class="btn btn--secondary btn--compact" onclick="PortalAlbums.refresh()" title="重新同步 Google Drive 相簿清單">🔄 重新整理</button>
+                    <a id="albumsOpenRootBtn" href="https://drive.google.com/drive/folders/1oFKQ9eJ4vwbSOUkQcVVw1890juvt5eDD?usp=drive_link" target="_blank" rel="noopener noreferrer" class="btn btn--secondary btn--compact">📂 Drive 總資料夾 ↗</a>
+                </div>
+            </div>
+
+            <div class="control-panel">
+                <div class="search-grid-2" style="grid-template-columns: 1fr;">
+                    <div class="input-wrap">
+                        <span class="input-icon" aria-hidden="true">🔍</span>
+                        <input type="text" inputmode="search" enterkeyhint="search" id="albumsSearchInput" class="field-input" placeholder="搜尋相簿名稱或分類..." autocomplete="off" aria-label="搜尋相簿名稱或分類">
+                        <button type="button" id="albumsClearSearchBtn" class="btn-clear-field" aria-label="清除搜尋">✕</button>
+                    </div>
+                </div>
+
+                <div class="filter-bar-row">
+                    <div class="chips-group" id="albumsCategoryChips">
+                        <button type="button" class="chip-btn is-active" data-album-cat="all">全部分類</button>
+                    </div>
+                    <button type="button" class="chip-btn" id="albumsSortToggleBtn">最新 ▾</button>
+                </div>
+            </div>
+
+            <div id="albumsLoading" class="loading-inline" style="display: none;">
+                <div class="spinner"></div>
+                <span>正在同步 Google Drive 相簿清單...</span>
+            </div>
+
+            <div id="albumsGrid" class="albums-grid"></div>
+        </div>
+    </section>
 </main>
+
+<!-- 回到頂端浮動按鈕 -->
+<button type="button" id="portalBackToTopBtn" class="portal-back-to-top" onclick="PortalApp.scrollToTop()" aria-label="回到頂端" title="回到頂端">
+    <span aria-hidden="true">↑</span>
+    <span>頂端</span>
+</button>
 
 <!-- 手機版底部固定導覽列 -->
 <nav class="mobile-dock" aria-label="手機功能導覽">
@@ -523,9 +578,13 @@
         <span class="dock-icon" aria-hidden="true">📜</span>
         <span class="dock-label">大事記</span>
     </button>
+    <button type="button" class="dock-item" data-tab="albums" onclick="PortalApp.switchTab('albums')">
+        <span class="dock-icon" aria-hidden="true">📷</span>
+        <span class="dock-label">相簿</span>
+    </button>
     <button type="button" class="dock-item" data-tab="leftHistory" onclick="PortalApp.switchTab('leftHistory')">
         <span class="dock-icon" aria-hidden="true">🚪</span>
-        <span class="dock-label">退群紀錄</span>
+        <span class="dock-label">退群</span>
     </button>
     <button type="button" class="dock-item" data-tab="other" onclick="PortalApp.switchTab('other')">
         <span class="dock-icon" aria-hidden="true">📌</span>
@@ -988,6 +1047,76 @@
     <img id="lightboxImage" src="" alt="頭像預覽" onclick="event.stopPropagation()">
 </div>
 
+<!-- ================================================================
+     MODAL 5: 共用相簿檢視抽屜（Phase 1 相簿備份 & Phase 2 大事記共用）
+     ================================================================ -->
+<div id="albumViewerOverlay" class="drawer-overlay" onclick="PortalAlbumViewer.handleOverlayClick(event)">
+    <div id="albumViewerPanel" class="drawer-panel detail-drawer album-viewer-drawer" role="dialog" aria-modal="true" aria-labelledby="albumViewerTitle">
+        <div class="drawer-header">
+            <div class="drawer-header__meta">
+                <span id="albumViewerCatPill" class="meta-pill">📁 相簿備份</span>
+                <span id="albumViewerCountPill" class="status-pill is-done">載入中</span>
+            </div>
+            <button type="button" class="icon-close-btn" onclick="PortalAlbumViewer.close()" aria-label="關閉相簿">✕</button>
+        </div>
+        <div id="albumViewerBody" class="drawer-body">
+            <div class="album-viewer-hero">
+                <h2 id="albumViewerTitle" class="gd-title" style="margin:0 0 6px;">活動相簿</h2>
+                <div id="albumViewerSub" class="album-viewer-sub"></div>
+                <div class="album-viewer-actions">
+                    <button type="button" id="albumBatchToggleBtn" class="btn btn--secondary btn--compact" onclick="PortalAlbumViewer.toggleSelectMode()">☑️ 批次下載</button>
+                    <a id="albumOpenDriveBtn" href="#" target="_blank" rel="noopener noreferrer" class="btn btn--secondary btn--compact">📂 Drive 原資料夾 ↗</a>
+                    <button type="button" id="albumRefreshBtn" class="btn btn--secondary btn--compact" onclick="PortalAlbumViewer.refresh()" title="重新整理相簿">🔄 重新整理</button>
+                </div>
+            </div>
+
+            <div id="albumBatchBar" class="album-batch-bar" style="display: none;">
+                <div class="album-batch-bar__top">
+                    <span id="albumBatchCount" class="mono album-batch-count">已選 0 / 20 張</span>
+                    <div class="album-batch-bar__btns">
+                        <button type="button" class="chip-btn" onclick="PortalAlbumViewer.selectTopImages()">全選前 20 張</button>
+                        <button type="button" class="chip-btn" onclick="PortalAlbumViewer.clearSelection()">清除</button>
+                        <button type="button" id="albumBatchDownloadBtn" class="btn btn--primary btn--compact" onclick="PortalAlbumViewer.downloadSelectedBatch()" disabled>📦 打包下載 (0 張)</button>
+                    </div>
+                </div>
+                <div id="albumBatchProgress" class="album-batch-progress mono" style="display: none;"></div>
+            </div>
+
+            <div id="albumViewerLoading" class="loading-inline" style="display: none;">
+                <div class="spinner"></div>
+                <span>正在讀取 Google Drive 相片清單...</span>
+            </div>
+
+            <div id="albumMediaGrid" class="album-media-grid"></div>
+        </div>
+    </div>
+</div>
+
+<!-- 共用全螢幕滑動相片燈箱 -->
+<div id="albumLightbox" class="album-lightbox" role="dialog" aria-modal="true" aria-label="相片檢視燈箱" onclick="if(event.target===this) PortalAlbumViewer.closeLightbox()">
+    <div class="album-lb-top">
+        <div class="album-lb-meta">
+            <span id="albumLbCounter" class="mono album-lb-counter">1 / 1</span>
+            <span id="albumLbName" class="album-lb-name"></span>
+        </div>
+        <button type="button" class="lightbox-close-btn" style="position:static;" onclick="PortalAlbumViewer.closeLightbox()" aria-label="關閉燈箱">✕</button>
+    </div>
+
+    <div id="albumLbStage" class="album-lb-stage" onclick="if(event.target===this) PortalAlbumViewer.closeLightbox()">
+        <button type="button" id="albumLbPrevBtn" class="album-lb-nav is-prev" onclick="event.stopPropagation(); PortalAlbumViewer.stepLightbox(-1)" aria-label="上一張">‹</button>
+        <div class="album-lb-img-wrap" onclick="event.stopPropagation()">
+            <img id="albumLbImg" src="" alt="相片預覽" referrerpolicy="no-referrer">
+            <a id="albumLbVideoNotice" href="#" target="_blank" rel="noopener noreferrer" class="album-lb-video-btn" style="display: none;">▶ 點此前往 Drive 播放完整影片 ↗</a>
+        </div>
+        <button type="button" id="albumLbNextBtn" class="album-lb-nav is-next" onclick="event.stopPropagation(); PortalAlbumViewer.stepLightbox(1)" aria-label="下一張">›</button>
+    </div>
+
+    <div class="album-lb-toolbar" onclick="event.stopPropagation()">
+        <a id="albumLbDownloadBtn" href="#" target="_blank" rel="noopener noreferrer" class="btn btn--primary btn--compact">⬇️ 下載相片</a>
+        <a id="albumLbDriveBtn" href="#" target="_blank" rel="noopener noreferrer" class="btn btn--secondary btn--compact">↗ 在 Drive 開啟</a>
+    </div>
+</div>
+
 <script src="./portal/js/api.js?v=20261124"></script>
 <script src="./portal/js/auth.js"></script>
 <script src="./portal/js/profileModal.js"></script>
@@ -996,7 +1125,9 @@
 <script src="./portal/js/groupForm.js"></script>
 <script src="./portal/js/membersView.js"></script>
 <script src="./portal/js/historyViews.js?v=20261125"></script>
+<script src="./portal/js/albumViewer.js?v=20261127"></script>
+<script src="./portal/js/albumsView.js?v=20261127"></script>
 <script src="./portal/js/otherView.js"></script>
-<script src="./portal/js/app.js"></script>
+<script src="./portal/js/app.js?v=20261127"></script>
 </body>
 </html>
