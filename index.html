@@ -17,7 +17,7 @@
 
     <link rel="stylesheet" href="./portal/css/portal.css?v=20261127">
     <link rel="stylesheet" href="./portal/css/jukebox.css">
-    <link rel="stylesheet" href="./portal/css/views.css?v=20261127b">
+    <link rel="stylesheet" href="./portal/css/views.css?v=20261127c">
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
@@ -286,6 +286,7 @@
                         <button type="button" class="chip-btn" data-gh-status="圓滿結束">圓滿結束</button>
                         <button type="button" class="chip-btn" data-gh-status="提前關團">提前關團</button>
                         <button type="button" class="chip-btn" data-gh-status="latestComment">💬 最新留言</button>
+                        <button type="button" class="chip-btn" data-gh-status="hasAlbum">📷 有相簿</button>
                         <button type="button" class="chip-btn" id="ghSortToggleBtn">最新 ▾</button>
                     </div>
                     <button type="button" id="ghResetFiltersBtn" class="btn-text-reset" style="display: none;" onclick="PortalHistory.resetGhFilters()">清除篩選 ✕</button>
@@ -340,6 +341,7 @@
                                 </div>
                                 <div id="ghPaneMemberChips" class="history-chips-wrap"></div>
                             </div>
+                            <div class="detail-block gh-album-block" id="ghPaneAlbumBlock" style="display: none;"></div>
                             <div class="detail-block gh-comments-block" id="ghPaneCommentsBlock"></div>
                         </div>
                     </div>
@@ -912,6 +914,7 @@
                 </div>
                 <div id="ghSheetMemberChips" class="member-chips-wrap history-chips-wrap"></div>
             </div>
+            <div class="detail-block gh-album-block" id="ghSheetAlbumBlock" style="display: none;"></div>
             <div class="detail-block gh-comments-block" id="ghSheetCommentsBlock"></div>
         </div>
     </div>
@@ -1122,6 +1125,39 @@
     </div>
 </div>
 
+<!-- 管理群專用：大事記相簿階層綁定彈窗 -->
+<div id="ghAlbumPickerOverlay" class="submodal-overlay" onclick="if(event.target===this) PortalHistory.closeAlbumPicker()">
+    <div class="submodal-panel gh-picker-panel" role="dialog" aria-modal="true" aria-labelledby="ghPickerTitle">
+        <div class="submodal-head">
+            <h3 id="ghPickerTitle" class="submodal-title">🔗 綁定活動相簿</h3>
+            <button type="button" class="icon-close-btn" onclick="PortalHistory.closeAlbumPicker()" aria-label="關閉">✕</button>
+        </div>
+        <div id="ghPickerTargetName" class="gh-picker-target"></div>
+
+        <div class="gh-picker-url-row">
+            <input type="text" id="ghPickerUrlInput" class="field-input" placeholder="直接貼上 Google Drive 資料夾連結或 ID..." autocomplete="off">
+            <button type="button" id="ghPickerUrlBindBtn" class="btn btn--primary btn--compact" onclick="PortalHistory.submitAlbumUrl()">綁定</button>
+        </div>
+
+        <div class="gh-picker-browse-head">
+            <div id="ghPickerBreadcrumb" class="gh-folder-breadcrumb"></div>
+            <button type="button" id="ghPickerBindCurrentBtn" class="btn btn--secondary btn--compact" style="display: none;" onclick="PortalHistory.bindCurrentBrowsedFolder()">✅ 綁定此資料夾</button>
+        </div>
+
+        <div class="input-wrap" style="margin-bottom: 4px;">
+            <span class="input-icon" aria-hidden="true">🔍</span>
+            <input type="text" id="ghPickerFilterInput" class="field-input" placeholder="過濾目前資料夾內的子資料夾..." oninput="PortalHistory.filterPickerFolders(this.value)" autocomplete="off">
+        </div>
+
+        <div id="ghPickerFolderList" class="gh-folder-list"></div>
+
+        <div class="submodal-actions" style="justify-content: space-between;">
+            <button type="button" id="ghPickerUnbindBtn" class="btn btn--danger btn--compact" style="display: none;" onclick="PortalHistory.unbindCurrentAlbum()">解除綁定</button>
+            <button type="button" class="btn btn--secondary btn--compact" onclick="PortalHistory.closeAlbumPicker()">關閉</button>
+        </div>
+    </div>
+</div>
+
 <script src="./portal/js/api.js?v=20261124"></script>
 <script src="./portal/js/auth.js"></script>
 <script src="./portal/js/profileModal.js"></script>
@@ -1129,10 +1165,10 @@
 <script src="./portal/js/groupDetail.js?v=20261124"></script>
 <script src="./portal/js/groupForm.js"></script>
 <script src="./portal/js/membersView.js"></script>
-<script src="./portal/js/historyViews.js?v=20261125"></script>
+<script src="./portal/js/historyViews.js?v=20261127c"></script>
 <script src="./portal/js/albumViewer.js?v=20261127b"></script>
 <script src="./portal/js/albumsView.js?v=20261127b"></script>
 <script src="./portal/js/otherView.js"></script>
-<script src="./portal/js/app.js?v=20261127"></script>
+<script src="./portal/js/app.js?v=20261127c"></script>
 </body>
 </html>
