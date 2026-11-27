@@ -535,16 +535,16 @@
                 <div class="search-grid-2" style="grid-template-columns: 1fr;">
                     <div class="input-wrap">
                         <span class="input-icon" aria-hidden="true">🔍</span>
-                        <input type="text" inputmode="search" enterkeyhint="search" id="albumsSearchInput" class="field-input" placeholder="搜尋相簿名稱或分類..." autocomplete="off" aria-label="搜尋相簿名稱或分類">
+                        <input type="text" inputmode="search" enterkeyhint="search" id="albumsSearchInput" class="field-input" placeholder="搜尋相簿名稱..." autocomplete="off" aria-label="搜尋相簿名稱">
                         <button type="button" id="albumsClearSearchBtn" class="btn-clear-field" aria-label="清除搜尋">✕</button>
                     </div>
                 </div>
 
                 <div class="filter-bar-row">
-                    <div class="chips-group" id="albumsCategoryChips">
-                        <button type="button" class="chip-btn is-active" data-album-cat="all">全部分類</button>
+                    <div class="chips-group" id="albumsSortChips">
+                        <button type="button" class="chip-btn is-active" data-album-sort="newest" onclick="PortalAlbums.setSortOrder('newest')">最新 ▾</button>
+                        <button type="button" class="chip-btn" data-album-sort="oldest" onclick="PortalAlbums.setSortOrder('oldest')">最舊 ▴</button>
                     </div>
-                    <button type="button" class="chip-btn" id="albumsSortToggleBtn">最新 ▾</button>
                 </div>
             </div>
 
@@ -1126,7 +1126,7 @@
 <script src="./portal/js/membersView.js"></script>
 <script src="./portal/js/historyViews.js?v=20261125"></script>
 <script src="./portal/js/albumViewer.js?v=20261127"></script>
-<script src="./portal/js/albumsView.js?v=20261127"></script>
+<script src="./portal/js/albumsView.js?v=20261127b"></script>
 <script src="./portal/js/otherView.js"></script>
 <script src="./portal/js/app.js?v=20261127"></script>
 </body>
